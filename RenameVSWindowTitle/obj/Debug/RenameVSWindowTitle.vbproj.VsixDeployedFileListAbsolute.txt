@@ -1,0 +1,5 @@
+C:\Users\Erwin\AppData\Local\Microsoft\VisualStudio\10.0Exp\Extensions\Erwin Mayer\Rename Visual Studio Window Title\1.0\\RenameVSWindowTitle.dll
+C:\Users\Erwin\AppData\Local\Microsoft\VisualStudio\10.0Exp\Extensions\Erwin Mayer\Rename Visual Studio Window Title\1.0\\RenameVSWindowTitle.pkgdef
+C:\Users\Erwin\AppData\Local\Microsoft\VisualStudio\10.0Exp\Extensions\Erwin Mayer\Rename Visual Studio Window Title\1.0\\extension.vsixmanifest
+C:\Users\Erwin\AppData\Local\Microsoft\VisualStudio\10.0Exp\Extensions\Erwin Mayer\Rename Visual Studio Window Title\1.0\\License.txt
+C:\Users\Erwin\AppData\Local\Microsoft\VisualStudio\10.0Exp\Extensions\Erwin Mayer\Rename Visual Studio Window Title\1.0\\RenameVSWindowTitle.pdb
