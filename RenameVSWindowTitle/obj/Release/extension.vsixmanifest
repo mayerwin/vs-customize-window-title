@@ -3,8 +3,8 @@
   <Identifier Id="5126c493-138a-46d7-a04d-ad772f6be159">
     <Name>Rename Visual Studio Window Title</Name>
     <Author>Erwin Mayer</Author>
-    <Version>1.0</Version>
-    <Description xml:space="preserve">This small extension will detect whenever two instances of Visual Studio are running and change the window title of Visual Studio to include the parent folder name of the solution.
+    <Version>1.1</Version>
+    <Description xml:space="preserve">This small extension will detect whenever two instances of Visual Studio are running with the same window title and change the window title of Visual Studio to include the parent folder name of the solution.
 It will therefore change SolutionFolder - Microsoft Visual Studio into SolutionFolderParent\SolutionFolder - Microsoft Visual Studio.
 
 This is particularly useful when branching a solution: it becomes possible to easily identify which branch you are working on, in the case where both would have the same solution name.</Description>
