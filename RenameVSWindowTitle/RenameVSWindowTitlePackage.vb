@@ -94,6 +94,7 @@ Public NotInheritable Class RenameVSWindowTitle
     Private Sub SetMainWindowTitle(ByVal state As Object)
         Try
             Dim hWnd As IntPtr = New IntPtr(Me.dte.MainWindow.HWnd)
+            If Me.dte Is Nothing OrElse Me.dte.Solution Is Nothing OrElse Me.dte.Solution.FullName = String.Empty Then Exit Sub
             Dim path = IO.Path.GetDirectoryName(Me.dte.Solution.FullName)
             Dim folders = path.Split("\"c)
 
@@ -135,7 +136,7 @@ Public NotInheritable Class RenameVSWindowTitle
             ElseIf currentInstanceWindowTitle.EndsWith(" *") Then 'Restore original window title
                 SetWindowText(hWnd, Me.currentInstanceOriginalWindowTitle)
             End If
-        Finally
+        Catch
         End Try
     End Sub
 
