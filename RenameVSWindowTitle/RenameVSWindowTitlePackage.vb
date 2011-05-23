@@ -12,6 +12,7 @@ Imports Microsoft.VisualStudio.Shell
 Imports System.Threading
 Imports System.Text.RegularExpressions
 Imports System.ComponentModel
+Imports System.IO
 
 ''' <summary>
 ''' This is the class that implements the package exposed by this assembly.
@@ -70,17 +71,45 @@ Public NotInheritable Class RenameVSWindowTitle
     Public resetTitleTimer As Timer
     Private currentInstanceOriginalWindowTitle As String
 
-    Private Shared Function GetProjectOrSolutionNameAndStatus(ByVal str As String) As Tuple(Of String, String)
+    Private Shared Function GetVSStatus(ByVal str As String) As String
         Try
             Dim pattern = New Regex("^(.*)\\(.*) - (Microsoft .*) \*$", RegexOptions.RightToLeft)
             Dim m = pattern.Match(str)
             If (m.Success) AndAlso m.Groups.Count >= 4 Then
-                Return New Tuple(Of String, String)(m.Groups(2).Captures(0).Value, m.Groups(3).Captures(0).Value)
+                'Return New Tuple(Of String, String)(m.Groups(2).Captures(0).Value, m.Groups(3).Captures(0).Value)
+                Return m.Groups(3).Captures(0).Value
             Else
                 pattern = New Regex("^(.*) - (Microsoft.*)$", RegexOptions.RightToLeft)
                 m = pattern.Match(str)
                 If (m.Success) AndAlso m.Groups.Count >= 3 Then
-                    Return New Tuple(Of String, String)(m.Groups(1).Captures(0).Value, m.Groups(2).Captures(0).Value)
+                    'Return New Tuple(Of String, String)(m.Groups(1).Captures(0).Value, m.Groups(2).Captures(0).Value)
+                    Return m.Groups(2).Captures(0).Value
+                Else
+                    Return Nothing
+                End If
+            End If
+        Catch
+            Return Nothing
+        End Try
+    End Function
+
+    Private Function GetVSName() As String
+        Return Path.GetFileNameWithoutExtension(Me.dte.Solution.FullName)
+    End Function
+
+    Private Shared Function GetVSName(ByVal str As String) As String
+        Try
+            Dim pattern = New Regex("^(.*)\\(.*) - (Microsoft .*) \*$", RegexOptions.RightToLeft)
+            Dim m = pattern.Match(str)
+            If (m.Success) AndAlso m.Groups.Count >= 4 Then
+                'Return New Tuple(Of String, String)(m.Groups(2).Captures(0).Value, m.Groups(3).Captures(0).Value)
+                Return m.Groups(2).Captures(0).Value
+            Else
+                pattern = New Regex("^(.*) - (Microsoft.*)$", RegexOptions.RightToLeft)
+                m = pattern.Match(str)
+                If (m.Success) AndAlso m.Groups.Count >= 3 Then
+                    'Return New Tuple(Of String, String)(m.Groups(1).Captures(0).Value, m.Groups(2).Captures(0).Value)
+                    Return m.Groups(1).Captures(0).Value
                 Else
                     Return Nothing
                 End If
@@ -106,7 +135,7 @@ Public NotInheritable Class RenameVSWindowTitle
             Dim hWnd As IntPtr = New IntPtr(Me.dte.MainWindow.HWnd)
             If Me.dte Is Nothing OrElse Me.dte.Solution Is Nothing OrElse Me.dte.Solution.FullName = String.Empty Then Exit Sub
             Dim path = IO.Path.GetDirectoryName(Me.dte.Solution.FullName)
-            Dim folders = path.Split("\"c)
+            Dim folders = path.Split(System.IO.Path.DirectorySeparatorChar)
 
             Dim currentInstance = Process.GetCurrentProcess()
             Dim currentInstanceWindowTitle = currentInstance.MainWindowTitle()
@@ -116,33 +145,34 @@ Public NotInheritable Class RenameVSWindowTitle
                 currentInstanceOriginalWindowTitle = currentInstanceWindowTitle
             End If
 
-            'Check if multiple instances of devenv have identical original names. If so, then rewrite the title of current instance (normally the extension will run on each instance so no need to rewrite them as well).
-            Dim conflict = False
             Dim vsInstances As Process() = Process.GetProcessesByName("devenv")
-            Dim currentInstanceSolutionNameAndStatus = GetProjectOrSolutionNameAndStatus(currentInstanceWindowTitle)
+            Dim conflict = False
 
-            'TODO: right now, it will not consider as same project/solution instances that are running, debugging, or editing, because it changes the window title. We could add in the regex (Running) and (Debugging) but this would not be locale independent... 
-            'The best would be to get the EnvDTE.DTE object of the other instances, and compare the solution or project names directly instead of relying on window titles (which may be hacked by third party software as well).
-            'When this is done, the following block should be activated (remove "False").
-            If False AndAlso currentInstanceSolutionNameAndStatus IsNot Nothing Then
-                For Each vsInstance As Process In vsInstances
-                    If vsInstance.Id = currentInstance.Id Then Continue For
-                    Dim vsInstanceSolutionNameAndStatus = GetProjectOrSolutionNameAndStatus(vsInstance.MainWindowTitle())
-                    If vsInstanceSolutionNameAndStatus IsNot Nothing _
-                        AndAlso currentInstanceSolutionNameAndStatus.Item1 = vsInstanceSolutionNameAndStatus.Item1 Then
-                        conflict = True
-                    End If
-                Next
-            End If
-
-            'So far, we just checked if two instances of "devenv" were opened, and in that case, set conflict = True to improve the window title. 
-            'When the above TODO about the differentiation of execution modes is fixed, we should remove the following. Or simply add it as a rule that can be triggered upon the preference of the user.
+            'Here we should have more rules
+            'So far, we just check if two instances of "devenv" were opened, and in that case, set conflict = True to improve the window title, unless RewriteOnlyIfConflict is true. 
             If vsInstances.Count >= Me.Settings.MinNumberOfInstances Then
-                conflict = True
+                'Check if multiple instances of devenv have identical original names. If so, then rewrite the title of current instance (normally the extension will run on each instance so no need to rewrite them as well). Otherwise do not rewrite the title.
+                'The best would be to get the EnvDTE.DTE object of the other instances, and compare the solution or project names directly instead of relying on window titles (which may be hacked by third party software as well).
+                Dim currentInstanceName = GetVSName()
+                If Me.Settings.RewriteOnlyIfConflict AndAlso Not String.IsNullOrEmpty(currentInstanceName) Then
+                    For Each vsInstance As Process In vsInstances
+                        If vsInstance.Id = currentInstance.Id Then Continue For
+                        Dim vsInstanceName = GetVSName(vsInstance.MainWindowTitle())
+                        If vsInstanceName IsNot Nothing _
+                            AndAlso currentInstanceName = vsInstanceName Then
+                            conflict = True
+                        Else
+                            conflict = False
+                        End If
+                    Next
+                Else
+                    conflict = True
+                End If
             End If
             If conflict Then 'Improve window title
                 'TODO: here we should incorporate tag based rules, based on the current instance's solution characteristics.
-                SetWindowText(hWnd, folders(folders.Count - 2) & "\" & currentInstanceSolutionNameAndStatus.Item1 & " - " & GetProjectOrSolutionNameAndStatus(Me.currentInstanceOriginalWindowTitle).Item2 & " *")
+                Dim tree = String.Join(System.IO.Path.DirectorySeparatorChar, folders.Reverse().Skip(Me.Settings.ClosestParentDepth - 1).Take(Me.Settings.FarthestParentDepth - Me.Settings.ClosestParentDepth + 1).Reverse())
+                SetWindowText(hWnd, tree & System.IO.Path.DirectorySeparatorChar & Me.GetVSName & " - " & GetVSStatus(Me.currentInstanceOriginalWindowTitle) & " *")
             ElseIf currentInstanceWindowTitle.EndsWith(" *") Then 'Restore original window title
                 SetWindowText(hWnd, Me.currentInstanceOriginalWindowTitle)
             End If
