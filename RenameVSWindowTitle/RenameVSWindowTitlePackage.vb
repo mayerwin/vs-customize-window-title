@@ -11,6 +11,7 @@ Imports Microsoft.VisualStudio.OLE.Interop
 Imports Microsoft.VisualStudio.Shell
 Imports System.Threading
 Imports System.Text.RegularExpressions
+Imports System.ComponentModel
 
 ''' <summary>
 ''' This is the class that implements the package exposed by this assembly.
@@ -28,10 +29,13 @@ Imports System.Text.RegularExpressions
 ' The InstalledProductRegistration attribute is used to register the information needed to show this package
 ' in the Help/About dialog of Visual Studio.
 
-<PackageRegistration(UseManagedResourcesOnly:=True), _
-InstalledProductRegistration("#110", "#112", "1.0", IconResourceID:=400), _
-ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string), _
-Guid(GuidList.guidRenameVSWindowTitle3PkgString)> _
+<PackageRegistration(UseManagedResourcesOnly:=True),
+InstalledProductRegistration("#110", "#112", "1.0", IconResourceID:=400),
+ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string),
+ProvideMenuResource("Menus.ctmenu", 1),
+Guid(GuidList.guidRenameVSWindowTitle3PkgString)>
+<ProvideOptionPage(GetType(OptionPageGrid),
+    "Rename VS Window Title", "Rules", 0, 0, True)>
 Public NotInheritable Class RenameVSWindowTitle
     Inherits Package
 
@@ -91,6 +95,12 @@ Public NotInheritable Class RenameVSWindowTitle
         Me.resetTitleTimer = New Timer(New TimerCallback(AddressOf SetMainWindowTitle), "Hello world!", 0, 10000) 'Every 10 seconds, we check the window titles.
     End Sub
 
+    Protected ReadOnly Property Settings() As OptionPageGrid
+        Get
+            Return CType(GetDialogPage(GetType(OptionPageGrid)), OptionPageGrid)
+        End Get
+    End Property
+
     Private Sub SetMainWindowTitle(ByVal state As Object)
         Try
             Dim hWnd As IntPtr = New IntPtr(Me.dte.MainWindow.HWnd)
@@ -127,7 +137,7 @@ Public NotInheritable Class RenameVSWindowTitle
 
             'So far, we just checked if two instances of "devenv" were opened, and in that case, set conflict = True to improve the window title. 
             'When the above TODO about the differentiation of execution modes is fixed, we should remove the following. Or simply add it as a rule that can be triggered upon the preference of the user.
-            If vsInstances.Count >= 2 Then
+            If vsInstances.Count >= Me.Settings.MinNumberOfInstances Then
                 conflict = True
             End If
             If conflict Then 'Improve window title
