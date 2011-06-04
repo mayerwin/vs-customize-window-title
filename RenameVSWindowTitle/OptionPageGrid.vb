@@ -18,7 +18,6 @@ Imports System.ComponentModel
 Public Class OptionPageGrid
     Inherits DialogPage
 
-
     Private _RewriteOnlyIfConflict As Boolean = False
     <Category("Rename VS Window Title")>
     <DisplayName("Only rewrite title if conflict")>
@@ -45,10 +44,10 @@ Public Class OptionPageGrid
         End Set
     End Property
 
-    Private _FarthestParentDepth As Integer = 2
+    Private _FarthestParentDepth As Integer = 1
     <Category("Rename VS Window Title")>
     <DisplayName("Farthest parent folder depth")>
-    <Description("Distance of the farthest parent folder to be shown. 1 will only show the folder of the opened projet/solution file. Default: 2.")>
+    <Description("Distance of the farthest parent folder to be shown. 1 will only show the folder of the opened projet/solution file, before the project/folder name. Default: 1.")>
     Public Property FarthestParentDepth() As Integer
         Get
             Return Me._FarthestParentDepth
@@ -58,10 +57,10 @@ Public Class OptionPageGrid
         End Set
     End Property
 
-    Private _ClosestParentDepth As Integer = 2
+    Private _ClosestParentDepth As Integer = 1
     <Category("Rename VS Window Title")>
     <DisplayName("Closest parent folder depth")>
-    <Description("Distance of the closest parent folder to be shown. 1 will only show the folder of the opened projet/solution file. Default: 2.")>
+    <Description("Distance of the closest parent folder to be shown. 1 will only show the folder of the opened projet/solution file, before the project/folder name. Default: 1.")>
     Public Property ClosestParentDepth() As Integer
         Get
             Return Me._ClosestParentDepth
