@@ -99,13 +99,39 @@ Public NotInheritable Class RenameVSWindowTitle
 
     Private Shared Function GetVSName(ByVal str As String) As String
         Try
-            Dim pattern = New Regex("^(.*)\\(.*) - (Microsoft .*) \*$", RegexOptions.RightToLeft)
+            Dim pattern = New Regex("^(.*)\\(.*) - (Microsoft.*) \*$", RegexOptions.RightToLeft)
             Dim m = pattern.Match(str)
             If (m.Success) AndAlso m.Groups.Count >= 4 Then
                 'Return New Tuple(Of String, String)(m.Groups(2).Captures(0).Value, m.Groups(3).Captures(0).Value)
-                Return m.Groups(2).Captures(0).Value
+                Dim name = m.Groups(2).Captures(0).Value
+                Dim state = GetVSState(str).ToString()
+                Return name.Substring(0, name.Length - If(state.Length + 3 > name.Length, 0, state.Length + 3))
             Else
                 pattern = New Regex("^(.*) - (Microsoft.*)$", RegexOptions.RightToLeft)
+                m = pattern.Match(str)
+                If (m.Success) AndAlso m.Groups.Count >= 3 Then
+                    'Return New Tuple(Of String, String)(m.Groups(1).Captures(0).Value, m.Groups(2).Captures(0).Value)
+                    Dim name = m.Groups(1).Captures(0).Value
+                    Dim state = GetVSState(str).ToString()
+                    Return name.Substring(0, name.Length - If(state.Length + 3 > name.Length, 0, state.Length + 3))
+                Else
+                    Return Nothing
+                End If
+            End If
+        Catch
+            Return Nothing
+        End Try
+    End Function
+
+    Private Shared Function GetVSState(ByVal str As String) As String
+        Try
+            Dim pattern = New Regex(" \((.*)\) - (Microsoft.*) \*$", RegexOptions.RightToLeft)
+            Dim m = pattern.Match(str)
+            If (m.Success) AndAlso m.Groups.Count >= 3 Then
+                'Return New Tuple(Of String, String)(m.Groups(2).Captures(0).Value, m.Groups(3).Captures(0).Value)
+                Return m.Groups(1).Captures(0).Value
+            Else
+                pattern = New Regex(" \((.*)\) - (Microsoft.*)$", RegexOptions.RightToLeft)
                 m = pattern.Match(str)
                 If (m.Success) AndAlso m.Groups.Count >= 3 Then
                     'Return New Tuple(Of String, String)(m.Groups(1).Captures(0).Value, m.Groups(2).Captures(0).Value)
@@ -172,7 +198,8 @@ Public NotInheritable Class RenameVSWindowTitle
             If conflict Then 'Improve window title
                 'TODO: here we should incorporate tag based rules, based on the current instance's solution characteristics.
                 Dim tree = String.Join(System.IO.Path.DirectorySeparatorChar, folders.Reverse().Skip(Me.Settings.ClosestParentDepth - 1).Take(Me.Settings.FarthestParentDepth - Me.Settings.ClosestParentDepth + 1).Reverse())
-                SetWindowText(hWnd, tree & System.IO.Path.DirectorySeparatorChar & Me.GetVSName & " - " & GetVSStatus(Me.currentInstanceOriginalWindowTitle) & " *")
+                Dim vsstate = GetVSState(Me.currentInstanceOriginalWindowTitle)
+                SetWindowText(hWnd, tree & System.IO.Path.DirectorySeparatorChar & Me.GetVSName & If(Not String.IsNullOrEmpty(vsstate), " (" & vsstate & ")", "") & " - " & GetVSStatus(Me.currentInstanceOriginalWindowTitle) & " *")
             ElseIf currentInstanceWindowTitle.EndsWith(" *") Then 'Restore original window title
                 SetWindowText(hWnd, Me.currentInstanceOriginalWindowTitle)
             End If
