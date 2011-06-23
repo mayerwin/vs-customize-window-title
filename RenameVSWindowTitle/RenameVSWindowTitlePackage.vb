@@ -1,18 +1,10 @@
-﻿Imports Microsoft.VisualBasic
-Imports System
-Imports System.Diagnostics
-Imports System.Globalization
-Imports System.Runtime.InteropServices
-Imports System.ComponentModel.Design
-Imports Microsoft.Win32
-Imports Microsoft.VisualStudio
-Imports Microsoft.VisualStudio.Shell.Interop
-Imports Microsoft.VisualStudio.OLE.Interop
-Imports Microsoft.VisualStudio.Shell
-Imports System.Threading
-Imports System.Text.RegularExpressions
-Imports System.ComponentModel
+﻿Imports System.Globalization
 Imports System.IO
+Imports System.Runtime.InteropServices
+Imports System.Text.RegularExpressions
+Imports System.Threading
+Imports Microsoft.VisualStudio
+Imports Microsoft.VisualStudio.Shell
 
 ''' <summary>
 ''' This is the class that implements the package exposed by this assembly.
@@ -39,7 +31,6 @@ Guid(GuidList.guidRenameVSWindowTitle3PkgString)>
     "Rename VS Window Title", "Rules", 0, 0, True)>
 Public NotInheritable Class RenameVSWindowTitle
     Inherits Package
-
     ''' <summary>
     ''' Default constructor of the package.
     ''' Inside this method you can place any initialization code that does not require 
@@ -48,20 +39,17 @@ Public NotInheritable Class RenameVSWindowTitle
     ''' initialization is the Initialize method.
     ''' </summary>
     Public Sub New()
-        Trace.WriteLine(String.Format(CultureInfo.CurrentCulture, "Entering constructor for: {0}", Me.GetType().Name))
     End Sub
 
 
     ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     ' Overriden Package Implementation
 #Region "Package Members"
-
     ''' <summary>
     ''' Initialization of the package; this method is called right after the package is sited, so this is the place
     ''' where you can put all the initilaization code that rely on services provided by VisualStudio.
     ''' </summary>
     Protected Overrides Sub Initialize()
-        Trace.WriteLine(String.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", Me.GetType().Name))
         MyBase.Initialize()
         DoInitialize()
     End Sub

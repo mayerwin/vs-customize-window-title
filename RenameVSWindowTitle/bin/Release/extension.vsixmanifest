@@ -3,7 +3,7 @@
   <Identifier Id="5126c493-138a-46d7-a04d-ad772f6be159">
     <Name>Rename Visual Studio Window Title</Name>
     <Author>Erwin Mayer</Author>
-    <Version>1.5.2</Version>
+    <Version>1.5.3</Version>
     <Description xml:space="preserve">This small extension will detect whenever two instances of Visual Studio are running with the same window title and change the window title of Visual Studio to include a folder tree with a configurable min depth and max depth distance from the solution/project file.
 With default settings, SolutionFolder - Microsoft Visual Studio will be rewritten as SolutionFolderParent\SolutionFolder - Microsoft Visual Studio.
 
