@@ -69,4 +69,17 @@ Public Class OptionPageGrid
             Me._ClosestParentDepth = value
         End Set
     End Property
+
+    Private _EnableDebugMode As Boolean = False
+    <Category("Rename VS Window Title")>
+    <DisplayName("Enable debug mode")>
+    <Description("Set to true to activate debug output to Output window.")>
+    Public Property EnableDebugMode() As Boolean
+        Get
+            Return Me._EnableDebugMode
+        End Get
+        Set(ByVal value As Boolean)
+            Me._EnableDebugMode = value
+        End Set
+    End Property
 End Class

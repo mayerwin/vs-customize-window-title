@@ -5,6 +5,8 @@ Imports System.Text.RegularExpressions
 Imports System.Threading
 Imports Microsoft.VisualStudio
 Imports Microsoft.VisualStudio.Shell
+Imports Microsoft.VisualStudio.Shell.Interop
+Imports System.Text
 
 ''' <summary>
 ''' This is the class that implements the package exposed by this assembly.
@@ -59,7 +61,7 @@ Public NotInheritable Class RenameVSWindowTitle
     Public resetTitleTimer As Timer
     Private CurrentInstanceOriginalWindowTitle As String
 
-    Private Shared Function GetVSStatus(ByVal str As String) As String
+    Private Function GetVSAppName(ByVal str As String) As String
         Try
             Dim m = New Regex("^(.*) - (Microsoft .*) \*$", RegexOptions.RightToLeft).Match(str)
             If (Not m.Success) Then m = New Regex("^(.*) - (Microsoft.*)$", RegexOptions.RightToLeft).Match(str)
@@ -67,9 +69,11 @@ Public NotInheritable Class RenameVSWindowTitle
                 'Return New Tuple(Of String, String)(m.Groups(2).Captures(0).Value, m.Groups(3).Captures(0).Value)
                 Return m.Groups(2).Captures(0).Value
             Else
+                If (Me.Settings.EnableDebugMode) Then WriteOutput("GetVSAppName not found: " & str & ".")
                 Return Nothing
             End If
-        Catch
+        Catch ex As Exception
+            If (Me.Settings.EnableDebugMode) Then WriteOutput("GetVSAppName Exception: " & str & ". Details: " + ex.ToString())
             Return Nothing
         End Try
     End Function
@@ -78,7 +82,7 @@ Public NotInheritable Class RenameVSWindowTitle
         Return Path.GetFileNameWithoutExtension(Me.dte.Solution.FullName)
     End Function
 
-    Private Shared Function GetVSName(ByVal str As String) As String
+    Private Function GetVSName(ByVal str As String) As String
         Try
             Dim m = New Regex("^(.*)\\(.*) - (Microsoft.*) \*$", RegexOptions.RightToLeft).Match(str)
             If (m.Success) AndAlso m.Groups.Count >= 4 Then
@@ -98,16 +102,18 @@ Public NotInheritable Class RenameVSWindowTitle
                         Dim state = GetVSState(str).ToString()
                         Return name.Substring(0, name.Length - If(String.IsNullOrEmpty(state), 0, state.Length + 3))
                     Else
+                        If (Me.Settings.EnableDebugMode) Then WriteOutput("GetVSName not found: " & str & ".")
                         Return Nothing
                     End If
                 End If
             End If
-        Catch
+        Catch ex As Exception
+            If (Me.Settings.EnableDebugMode) Then WriteOutput("GetVSName Exception: " & str & ". Details: " + ex.ToString())
             Return Nothing
         End Try
     End Function
 
-    Private Shared Function GetVSState(ByVal str As String) As String
+    Private Function GetVSState(ByVal str As String) As String
         Try
             Dim m = New Regex(" \((.*)\) - (Microsoft.*) \*$", RegexOptions.RightToLeft).Match(str)
             If (Not m.Success) Then m = New Regex(" \((.*)\) - (Microsoft.*)$", RegexOptions.RightToLeft).Match(str)
@@ -115,16 +121,18 @@ Public NotInheritable Class RenameVSWindowTitle
                 'Return New Tuple(Of String, String)(m.Groups(2).Captures(0).Value, m.Groups(3).Captures(0).Value)
                 Return m.Groups(1).Captures(0).Value
             Else
+                If (Me.Settings.EnableDebugMode) Then WriteOutput("GetVSState not found: " & str & ".")
                 Return Nothing
             End If
-        Catch
+        Catch ex As Exception
+            If (Me.Settings.EnableDebugMode) Then WriteOutput("GetVSState Exception: " & str & ". Details: " + ex.ToString())
             Return Nothing
         End Try
     End Function
 
     Protected Sub DoInitialize()
         Me.dte = DirectCast(GetGlobalService(GetType(EnvDTE.DTE)), EnvDTE.DTE)
-        Me.resetTitleTimer = New Timer(New TimerCallback(AddressOf SetMainWindowTitle), "Hello world!", 0, 10000) 'Every 10 seconds, we check the window titles.
+        Me.resetTitleTimer = New Timer(New TimerCallback(AddressOf SetMainWindowTitle), "Hello world!", 0, 5000) 'Every 5 seconds, we check the window titles.
     End Sub
 
     Protected ReadOnly Property Settings() As OptionPageGrid
@@ -133,7 +141,10 @@ Public NotInheritable Class RenameVSWindowTitle
         End Get
     End Property
 
+    Private SetMainWindowTitleLock As Object = New Object()
+
     Private Sub SetMainWindowTitle(ByVal state As Object)
+        If (Not Monitor.TryEnter(SetMainWindowTitleLock)) Then Return
         Try
             Dim hWnd As IntPtr = New IntPtr(Me.dte.MainWindow.HWnd)
             If Me.dte Is Nothing OrElse Me.dte.Solution Is Nothing OrElse Me.dte.Solution.FullName = String.Empty Then Exit Sub
@@ -142,9 +153,16 @@ Public NotInheritable Class RenameVSWindowTitle
 
             Dim currentInstance = Process.GetCurrentProcess()
             Dim currentInstanceWindowTitle = currentInstance.MainWindowTitle()
+            If String.IsNullOrWhiteSpace(currentInstanceWindowTitle) Then 'Does not always work for some reason (e.g. sometimes on Windows Server 2008 R2).
+                currentInstanceWindowTitle = GetWindowTitle(hWnd)
+                If String.IsNullOrWhiteSpace(currentInstanceWindowTitle) Then
+                    Return
+                End If
+            End If
+            If (Me.Settings.EnableDebugMode) Then WriteOutput("Current instance window title: " & currentInstanceWindowTitle)
 
             'We append " *" when the window title has been improved
-            If Not currentInstanceWindowTitle.EndsWith(" *") AndAlso Not String.IsNullOrEmpty(currentInstanceWindowTitle) Then
+            If Not currentInstanceWindowTitle.EndsWith(" *") Then
                 Me.CurrentInstanceOriginalWindowTitle = currentInstanceWindowTitle
             End If
 
@@ -171,18 +189,35 @@ Public NotInheritable Class RenameVSWindowTitle
                     conflict = True
                 End If
             End If
-            If conflict AndAlso Not String.IsNullOrEmpty(Me.CurrentInstanceOriginalWindowTitle) Then 'Improve window title
+            If conflict Then 'Improve window title
                 'TODO: here we should incorporate tag based rules, based on the current instance's solution characteristics.
                 Dim tree = IO.Path.Combine(folders.Reverse().Skip(Me.Settings.ClosestParentDepth - 1).Take(Me.Settings.FarthestParentDepth - Me.Settings.ClosestParentDepth + 1).Reverse().ToArray())
                 Dim vsstate = GetVSState(Me.CurrentInstanceOriginalWindowTitle)
-                SetWindowText(hWnd, tree & System.IO.Path.DirectorySeparatorChar & Me.GetVSName() & If(Not String.IsNullOrEmpty(vsstate), " (" & vsstate & ")", "") & " - " & GetVSStatus(Me.CurrentInstanceOriginalWindowTitle) & " *")
-            ElseIf currentInstanceWindowTitle.EndsWith(" *") AndAlso Not String.IsNullOrEmpty(Me.CurrentInstanceOriginalWindowTitle) Then 'Restore original window title
+                Dim appName = GetVSAppName(Me.CurrentInstanceOriginalWindowTitle)
+                SetWindowText(hWnd, tree & System.IO.Path.DirectorySeparatorChar & Me.GetVSName() & If(Not String.IsNullOrEmpty(vsstate), " (" & vsstate & ")", "") & " - " & appName & " *")
+            ElseIf currentInstanceWindowTitle.EndsWith(" *") Then 'Restore original window title
                 SetWindowText(hWnd, Me.CurrentInstanceOriginalWindowTitle)
             End If
-        Catch
+        Catch ex As Exception
+            If (Me.Settings.EnableDebugMode) Then WriteOutput("SetMainWindowTitle Exception: " + ex.ToString())
+        Finally
+            Monitor.Exit(SetMainWindowTitleLock)
         End Try
     End Sub
 
+    Private Shared Sub WriteOutput(ByVal str As String)
+        Try
+            Dim outWindow As IVsOutputWindow = TryCast(Package.GetGlobalService(GetType(SVsOutputWindow)), IVsOutputWindow)
+
+            Dim generalPaneGuid As Guid = VSConstants.OutputWindowPaneGuid.DebugPane_guid
+            ' P.S. There's also the VSConstants.GUID_OutWindowDebugPane available.
+            Dim generalPane As IVsOutputWindowPane = Nothing
+            outWindow.GetPane(generalPaneGuid, generalPane)
+            generalPane.OutputString("RenameVSWindowTitle: " & str & vbNewLine)
+            generalPane.Activate()
+        Catch
+        End Try
+    End Sub
     'Dim processes As Process() = Process.GetProcessesByName("MyApp")
     'For Each process As Process In processes
     'Dim windows As IDictionary(Of IntPtr, String) = GetOpenWindowsFromPID(Process.Id)
@@ -190,6 +225,26 @@ Public NotInheritable Class RenameVSWindowTitle
     '' Do whatever you want here 
     'Next
     'Next
+    Private Shared Function GetWindowTitle(ByVal hWnd As IntPtr) As String
+        Const nChars As Integer = 256
+        Dim Buff As New StringBuilder(nChars)
+        If GetWindowText(hWnd, Buff, nChars) > 0 Then
+            Return Buff.ToString()
+        End If
+        Return Nothing
+    End Function
+
+    Private Function GetActiveWindowTitle() As String
+        Const nChars As Integer = 256
+        Dim handle As IntPtr = IntPtr.Zero
+        Dim Buff As New StringBuilder(nChars)
+        handle = GetForegroundWindow()
+
+        If GetWindowText(handle, Buff, nChars) > 0 Then
+            Return Buff.ToString()
+        End If
+        Return Nothing
+    End Function
 
     <DllImport("user32.dll")> _
     Private Shared Function SetWindowText(ByVal hWnd As IntPtr, ByVal lpString As String) As Boolean
@@ -200,7 +255,11 @@ Public NotInheritable Class RenameVSWindowTitle
     End Function
 
     <DllImport("user32.dll")> _
-    Private Shared Function GetWindowText(ByVal hWnd As IntPtr, ByVal lpString As Text.StringBuilder, ByVal nMaxCount As Integer) As Integer
+    Private Shared Function GetForegroundWindow() As IntPtr
+    End Function
+
+    <DllImport("user32.dll")> _
+    Private Shared Function GetWindowText(hWnd As IntPtr, text As StringBuilder, count As Integer) As Integer
     End Function
 
     <DllImport("user32.dll")> _
@@ -224,7 +283,6 @@ Public NotInheritable Class RenameVSWindowTitle
     Private hShellWindow As IntPtr = GetShellWindow()
     Private dictWindows As New Dictionary(Of IntPtr, String)
     Private currentProcessID As Integer
-
 
     Public Function GetOpenWindowsFromPID(ByVal processID As Integer) As IDictionary(Of IntPtr, String)
         dictWindows.Clear()
