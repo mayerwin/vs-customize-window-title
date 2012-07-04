@@ -159,6 +159,7 @@ Public NotInheritable Class RenameVSWindowTitle
                     Return
                 End If
             End If
+            If (String.IsNullOrWhiteSpace(GetVSAppName(currentInstanceWindowTitle))) Then Return
             If (Me.Settings.EnableDebugMode) Then WriteOutput("Current instance window title: " & currentInstanceWindowTitle)
 
             'We append " *" when the window title has been improved
