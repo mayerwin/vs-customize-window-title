@@ -144,7 +144,7 @@ Public NotInheritable Class RenameVSWindowTitle
             Dim currentInstanceWindowTitle = currentInstance.MainWindowTitle()
 
             'We append " *" when the window title has been improved
-            If Not currentInstanceWindowTitle.EndsWith(" *") Then
+            If Not currentInstanceWindowTitle.EndsWith(" *") AndAlso Not String.IsNullOrEmpty(currentInstanceWindowTitle) Then
                 Me.CurrentInstanceOriginalWindowTitle = currentInstanceWindowTitle
             End If
 
@@ -171,12 +171,12 @@ Public NotInheritable Class RenameVSWindowTitle
                     conflict = True
                 End If
             End If
-            If conflict Then 'Improve window title
+            If conflict AndAlso Not String.IsNullOrEmpty(Me.CurrentInstanceOriginalWindowTitle) Then 'Improve window title
                 'TODO: here we should incorporate tag based rules, based on the current instance's solution characteristics.
                 Dim tree = IO.Path.Combine(folders.Reverse().Skip(Me.Settings.ClosestParentDepth - 1).Take(Me.Settings.FarthestParentDepth - Me.Settings.ClosestParentDepth + 1).Reverse().ToArray())
                 Dim vsstate = GetVSState(Me.CurrentInstanceOriginalWindowTitle)
                 SetWindowText(hWnd, tree & System.IO.Path.DirectorySeparatorChar & Me.GetVSName() & If(Not String.IsNullOrEmpty(vsstate), " (" & vsstate & ")", "") & " - " & GetVSStatus(Me.CurrentInstanceOriginalWindowTitle) & " *")
-            ElseIf currentInstanceWindowTitle.EndsWith(" *") Then 'Restore original window title
+            ElseIf currentInstanceWindowTitle.EndsWith(" *") AndAlso Not String.IsNullOrEmpty(Me.CurrentInstanceOriginalWindowTitle) Then 'Restore original window title
                 SetWindowText(hWnd, Me.CurrentInstanceOriginalWindowTitle)
             End If
         Catch
