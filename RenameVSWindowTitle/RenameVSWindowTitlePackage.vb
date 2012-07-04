@@ -57,24 +57,17 @@ Public NotInheritable Class RenameVSWindowTitle
 
     Private dte As EnvDTE.DTE
     Public resetTitleTimer As Timer
-    Private currentInstanceOriginalWindowTitle As String
+    Private CurrentInstanceOriginalWindowTitle As String
 
     Private Shared Function GetVSStatus(ByVal str As String) As String
         Try
-            Dim pattern = New Regex("^(.*)\\(.*) - (Microsoft .*) \*$", RegexOptions.RightToLeft)
-            Dim m = pattern.Match(str)
-            If (m.Success) AndAlso m.Groups.Count >= 4 Then
+            Dim m = New Regex("^(.*) - (Microsoft .*) \*$", RegexOptions.RightToLeft).Match(str)
+            If (Not m.Success) Then m = New Regex("^(.*) - (Microsoft.*)$", RegexOptions.RightToLeft).Match(str)
+            If (m.Success) AndAlso m.Groups.Count >= 3 Then
                 'Return New Tuple(Of String, String)(m.Groups(2).Captures(0).Value, m.Groups(3).Captures(0).Value)
-                Return m.Groups(3).Captures(0).Value
+                Return m.Groups(2).Captures(0).Value
             Else
-                pattern = New Regex("^(.*) - (Microsoft.*)$", RegexOptions.RightToLeft)
-                m = pattern.Match(str)
-                If (m.Success) AndAlso m.Groups.Count >= 3 Then
-                    'Return New Tuple(Of String, String)(m.Groups(1).Captures(0).Value, m.Groups(2).Captures(0).Value)
-                    Return m.Groups(2).Captures(0).Value
-                Else
-                    Return Nothing
-                End If
+                Return Nothing
             End If
         Catch
             Return Nothing
@@ -87,23 +80,26 @@ Public NotInheritable Class RenameVSWindowTitle
 
     Private Shared Function GetVSName(ByVal str As String) As String
         Try
-            Dim pattern = New Regex("^(.*)\\(.*) - (Microsoft.*) \*$", RegexOptions.RightToLeft)
-            Dim m = pattern.Match(str)
+            Dim m = New Regex("^(.*)\\(.*) - (Microsoft.*) \*$", RegexOptions.RightToLeft).Match(str)
             If (m.Success) AndAlso m.Groups.Count >= 4 Then
-                'Return New Tuple(Of String, String)(m.Groups(2).Captures(0).Value, m.Groups(3).Captures(0).Value)
                 Dim name = m.Groups(2).Captures(0).Value
                 Dim state = GetVSState(str).ToString()
-                Return name.Substring(0, name.Length - If(state.Length + 3 > name.Length, 0, state.Length + 3))
+                Return name.Substring(0, name.Length - If(String.IsNullOrEmpty(state), 0, state.Length + 3))
             Else
-                pattern = New Regex("^(.*) - (Microsoft.*)$", RegexOptions.RightToLeft)
-                m = pattern.Match(str)
+                m = New Regex("^(.*) - (Microsoft.*) \*$", RegexOptions.RightToLeft).Match(str)
                 If (m.Success) AndAlso m.Groups.Count >= 3 Then
-                    'Return New Tuple(Of String, String)(m.Groups(1).Captures(0).Value, m.Groups(2).Captures(0).Value)
                     Dim name = m.Groups(1).Captures(0).Value
                     Dim state = GetVSState(str).ToString()
-                    Return name.Substring(0, name.Length - If(state.Length + 3 > name.Length, 0, state.Length + 3))
+                    Return name.Substring(0, name.Length - If(String.IsNullOrEmpty(state), 0, state.Length + 3))
                 Else
-                    Return Nothing
+                    m = New Regex("^(.*) - (Microsoft.*)$", RegexOptions.RightToLeft).Match(str)
+                    If (m.Success) AndAlso m.Groups.Count >= 3 Then
+                        Dim name = m.Groups(1).Captures(0).Value
+                        Dim state = GetVSState(str).ToString()
+                        Return name.Substring(0, name.Length - If(String.IsNullOrEmpty(state), 0, state.Length + 3))
+                    Else
+                        Return Nothing
+                    End If
                 End If
             End If
         Catch
@@ -113,20 +109,13 @@ Public NotInheritable Class RenameVSWindowTitle
 
     Private Shared Function GetVSState(ByVal str As String) As String
         Try
-            Dim pattern = New Regex(" \((.*)\) - (Microsoft.*) \*$", RegexOptions.RightToLeft)
-            Dim m = pattern.Match(str)
+            Dim m = New Regex(" \((.*)\) - (Microsoft.*) \*$", RegexOptions.RightToLeft).Match(str)
+            If (Not m.Success) Then m = New Regex(" \((.*)\) - (Microsoft.*)$", RegexOptions.RightToLeft).Match(str)
             If (m.Success) AndAlso m.Groups.Count >= 3 Then
                 'Return New Tuple(Of String, String)(m.Groups(2).Captures(0).Value, m.Groups(3).Captures(0).Value)
                 Return m.Groups(1).Captures(0).Value
             Else
-                pattern = New Regex(" \((.*)\) - (Microsoft.*)$", RegexOptions.RightToLeft)
-                m = pattern.Match(str)
-                If (m.Success) AndAlso m.Groups.Count >= 3 Then
-                    'Return New Tuple(Of String, String)(m.Groups(1).Captures(0).Value, m.Groups(2).Captures(0).Value)
-                    Return m.Groups(1).Captures(0).Value
-                Else
-                    Return Nothing
-                End If
+                Return Nothing
             End If
         Catch
             Return Nothing
@@ -156,14 +145,14 @@ Public NotInheritable Class RenameVSWindowTitle
 
             'We append " *" when the window title has been improved
             If Not currentInstanceWindowTitle.EndsWith(" *") Then
-                currentInstanceOriginalWindowTitle = currentInstanceWindowTitle
+                Me.CurrentInstanceOriginalWindowTitle = currentInstanceWindowTitle
             End If
 
             Dim vsInstances As Process() = Process.GetProcessesByName("devenv")
             Dim conflict = False
 
             'Here we should have more rules
-            'So far, we just check if two instances of "devenv" were opened, and in that case, set conflict = True to improve the window title, unless RewriteOnlyIfConflict is true. 
+            'So far, we just check if two or more instances of "devenv" were opened, and in that case, set conflict = True to improve the window title, unless RewriteOnlyIfConflict is true. 
             If vsInstances.Count >= Me.Settings.MinNumberOfInstances Then
                 'Check if multiple instances of devenv have identical original names. If so, then rewrite the title of current instance (normally the extension will run on each instance so no need to rewrite them as well). Otherwise do not rewrite the title.
                 'The best would be to get the EnvDTE.DTE object of the other instances, and compare the solution or project names directly instead of relying on window titles (which may be hacked by third party software as well).
@@ -172,8 +161,7 @@ Public NotInheritable Class RenameVSWindowTitle
                     For Each vsInstance As Process In vsInstances
                         If vsInstance.Id = currentInstance.Id Then Continue For
                         Dim vsInstanceName = GetVSName(vsInstance.MainWindowTitle())
-                        If vsInstanceName IsNot Nothing _
-                            AndAlso currentInstanceName = vsInstanceName Then
+                        If (vsInstanceName IsNot Nothing) AndAlso (currentInstanceName = vsInstanceName) Then
                             conflict = True
                         Else
                             conflict = False
@@ -185,11 +173,11 @@ Public NotInheritable Class RenameVSWindowTitle
             End If
             If conflict Then 'Improve window title
                 'TODO: here we should incorporate tag based rules, based on the current instance's solution characteristics.
-                Dim tree = String.Join(System.IO.Path.DirectorySeparatorChar, folders.Reverse().Skip(Me.Settings.ClosestParentDepth - 1).Take(Me.Settings.FarthestParentDepth - Me.Settings.ClosestParentDepth + 1).Reverse())
-                Dim vsstate = GetVSState(Me.currentInstanceOriginalWindowTitle)
-                SetWindowText(hWnd, tree & System.IO.Path.DirectorySeparatorChar & Me.GetVSName & If(Not String.IsNullOrEmpty(vsstate), " (" & vsstate & ")", "") & " - " & GetVSStatus(Me.currentInstanceOriginalWindowTitle) & " *")
+                Dim tree = IO.Path.Combine(folders.Reverse().Skip(Me.Settings.ClosestParentDepth - 1).Take(Me.Settings.FarthestParentDepth - Me.Settings.ClosestParentDepth + 1).Reverse().ToArray())
+                Dim vsstate = GetVSState(Me.CurrentInstanceOriginalWindowTitle)
+                SetWindowText(hWnd, tree & System.IO.Path.DirectorySeparatorChar & Me.GetVSName() & If(Not String.IsNullOrEmpty(vsstate), " (" & vsstate & ")", "") & " - " & GetVSStatus(Me.CurrentInstanceOriginalWindowTitle) & " *")
             ElseIf currentInstanceWindowTitle.EndsWith(" *") Then 'Restore original window title
-                SetWindowText(hWnd, Me.currentInstanceOriginalWindowTitle)
+                SetWindowText(hWnd, Me.CurrentInstanceOriginalWindowTitle)
             End If
         Catch
         End Try
