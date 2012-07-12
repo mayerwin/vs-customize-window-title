@@ -1,5 +1,4 @@
-﻿Imports System.Globalization
-Imports System.IO
+﻿Imports System.IO
 Imports System.Runtime.InteropServices
 Imports System.Text.RegularExpressions
 Imports System.Threading
@@ -59,7 +58,9 @@ Public NotInheritable Class RenameVSWindowTitle
 
     Private dte As EnvDTE.DTE
     Public resetTitleTimer As Timer
-    Private CurrentInstanceOriginalWindowTitle As String
+    Private CurrentInstanceOriginalTitle As String
+    Private CurrentInstanceOriginalState As String
+    Private CurrentInstanceOriginalAppName As String
 
     Private Function GetVSAppName(ByVal str As String) As String
         Try
@@ -69,7 +70,7 @@ Public NotInheritable Class RenameVSWindowTitle
                 'Return New Tuple(Of String, String)(m.Groups(2).Captures(0).Value, m.Groups(3).Captures(0).Value)
                 Return m.Groups(2).Captures(0).Value
             Else
-                If (Me.Settings.EnableDebugMode) Then WriteOutput("GetVSAppName not found: " & str & ".")
+                If (Me.Settings.EnableDebugMode) Then WriteOutput("VSAppName not found: " & str & ".")
                 Return Nothing
             End If
         Catch ex As Exception
@@ -78,11 +79,11 @@ Public NotInheritable Class RenameVSWindowTitle
         End Try
     End Function
 
-    Private Function GetVSName() As String
+    Private Function GetVSSolutionName() As String
         Return Path.GetFileNameWithoutExtension(Me.dte.Solution.FullName)
     End Function
 
-    Private Function GetVSName(ByVal str As String) As String
+    Private Function GetVSSolutionName(ByVal str As String) As String
         Try
             Dim m = New Regex("^(.*)\\(.*) - (Microsoft.*) \*$", RegexOptions.RightToLeft).Match(str)
             If (m.Success) AndAlso m.Groups.Count >= 4 Then
@@ -102,7 +103,7 @@ Public NotInheritable Class RenameVSWindowTitle
                         Dim state = GetVSState(str).ToString()
                         Return name.Substring(0, name.Length - If(String.IsNullOrEmpty(state), 0, state.Length + 3))
                     Else
-                        If (Me.Settings.EnableDebugMode) Then WriteOutput("GetVSName not found: " & str & ".")
+                        If (Me.Settings.EnableDebugMode) Then WriteOutput("VSName not found: " & str & ".")
                         Return Nothing
                     End If
                 End If
@@ -121,7 +122,7 @@ Public NotInheritable Class RenameVSWindowTitle
                 'Return New Tuple(Of String, String)(m.Groups(2).Captures(0).Value, m.Groups(3).Captures(0).Value)
                 Return m.Groups(1).Captures(0).Value
             Else
-                If (Me.Settings.EnableDebugMode) Then WriteOutput("GetVSState not found: " & str & ".")
+                If (Me.Settings.EnableDebugMode) Then WriteOutput("VSState not found: " & str & ".")
                 Return Nothing
             End If
         Catch ex As Exception
@@ -146,17 +147,20 @@ Public NotInheritable Class RenameVSWindowTitle
     Private Sub SetMainWindowTitle(ByVal state As Object)
         If (Not Monitor.TryEnter(SetMainWindowTitleLock)) Then Return
         Try
-            Dim hWnd As IntPtr = New IntPtr(Me.dte.MainWindow.HWnd)
             If Me.dte Is Nothing OrElse Me.dte.Solution Is Nothing OrElse Me.dte.Solution.FullName = String.Empty Then Exit Sub
+            Dim hWnd As IntPtr = New IntPtr(Me.dte.MainWindow.HWnd)
             Dim path = IO.Path.GetDirectoryName(Me.dte.Solution.FullName)
             Dim folders = path.Split(System.IO.Path.DirectorySeparatorChar)
 
             Dim currentInstance = Process.GetCurrentProcess()
-            Dim currentInstanceWindowTitle = currentInstance.MainWindowTitle()
-            If String.IsNullOrWhiteSpace(currentInstanceWindowTitle) Then 'Does not always work for some reason (e.g. sometimes on Windows Server 2008 R2).
-                currentInstanceWindowTitle = GetWindowTitle(hWnd)
-                If String.IsNullOrWhiteSpace(currentInstanceWindowTitle) Then
-                    Return
+            Dim currentInstanceWindowTitle = Me.dte.MainWindow.Caption ' 
+            If String.IsNullOrWhiteSpace(currentInstanceWindowTitle) Then
+                currentInstanceWindowTitle = currentInstance.MainWindowTitle()
+                If String.IsNullOrWhiteSpace(currentInstanceWindowTitle) Then 'Does not always work for some reason (e.g. sometimes on Windows Server 2008 R2).
+                    currentInstanceWindowTitle = GetWindowTitle(hWnd)
+                    If String.IsNullOrWhiteSpace(currentInstanceWindowTitle) Then
+                        Return
+                    End If
                 End If
             End If
             If (String.IsNullOrWhiteSpace(GetVSAppName(currentInstanceWindowTitle))) Then Return
@@ -164,7 +168,12 @@ Public NotInheritable Class RenameVSWindowTitle
 
             'We append " *" when the window title has been improved
             If Not currentInstanceWindowTitle.EndsWith(" *") Then
-                Me.CurrentInstanceOriginalWindowTitle = currentInstanceWindowTitle
+                Me.CurrentInstanceOriginalTitle = currentInstanceWindowTitle
+                Me.CurrentInstanceOriginalState = GetVSState(currentInstanceWindowTitle)
+                Me.CurrentInstanceOriginalAppName = GetVSAppName(currentInstanceWindowTitle)
+                If (String.IsNullOrWhiteSpace(Me.CurrentInstanceOriginalState) AndAlso Me.dte.Mode <> EnvDTE.vsIDEMode.vsIDEModeDesign) Then
+                    Exit Sub
+                End If
             End If
 
             Dim vsInstances As Process() = Process.GetProcessesByName("devenv")
@@ -175,11 +184,11 @@ Public NotInheritable Class RenameVSWindowTitle
             If vsInstances.Count >= Me.Settings.MinNumberOfInstances Then
                 'Check if multiple instances of devenv have identical original names. If so, then rewrite the title of current instance (normally the extension will run on each instance so no need to rewrite them as well). Otherwise do not rewrite the title.
                 'The best would be to get the EnvDTE.DTE object of the other instances, and compare the solution or project names directly instead of relying on window titles (which may be hacked by third party software as well).
-                Dim currentInstanceName = GetVSName()
+                Dim currentInstanceName = GetVSSolutionName()
                 If Me.Settings.RewriteOnlyIfConflict AndAlso Not String.IsNullOrEmpty(currentInstanceName) Then
                     For Each vsInstance As Process In vsInstances
                         If vsInstance.Id = currentInstance.Id Then Continue For
-                        Dim vsInstanceName = GetVSName(vsInstance.MainWindowTitle())
+                        Dim vsInstanceName = GetVSSolutionName(vsInstance.MainWindowTitle())
                         If (vsInstanceName IsNot Nothing) AndAlso (currentInstanceName = vsInstanceName) Then
                             conflict = True
                         Else
@@ -193,17 +202,21 @@ Public NotInheritable Class RenameVSWindowTitle
             If conflict Then 'Improve window title
                 'TODO: here we should incorporate tag based rules, based on the current instance's solution characteristics.
                 Dim tree = IO.Path.Combine(folders.Reverse().Skip(Me.Settings.ClosestParentDepth - 1).Take(Me.Settings.FarthestParentDepth - Me.Settings.ClosestParentDepth + 1).Reverse().ToArray())
-                Dim vsstate = GetVSState(Me.CurrentInstanceOriginalWindowTitle)
-                Dim appName = GetVSAppName(Me.CurrentInstanceOriginalWindowTitle)
-                SetWindowText(hWnd, tree & System.IO.Path.DirectorySeparatorChar & Me.GetVSName() & If(Not String.IsNullOrEmpty(vsstate), " (" & vsstate & ")", "") & " - " & appName & " *")
+                ChangeDteWindowTitle(Me.dte, hWnd, tree & System.IO.Path.DirectorySeparatorChar & Me.GetVSSolutionName() & If(Not String.IsNullOrEmpty(Me.CurrentInstanceOriginalState), " (" & Me.CurrentInstanceOriginalState & ")", "") & " - " & Me.CurrentInstanceOriginalAppName & " *")
             ElseIf currentInstanceWindowTitle.EndsWith(" *") Then 'Restore original window title
-                SetWindowText(hWnd, Me.CurrentInstanceOriginalWindowTitle)
+                ChangeDteWindowTitle(Me.dte, hWnd, Me.CurrentInstanceOriginalTitle)
             End If
         Catch ex As Exception
             If (Me.Settings.EnableDebugMode) Then WriteOutput("SetMainWindowTitle Exception: " + ex.ToString())
         Finally
             Monitor.Exit(SetMainWindowTitleLock)
         End Try
+    End Sub
+
+    Private Shared Sub ChangeDteWindowTitle(ByVal dte As EnvDTE.DTE, ByVal hWnd As IntPtr, ByVal title As String)
+        If (dte.MainWindow.Caption <> title) Then
+            SetWindowText(hWnd:=hWnd, lpString:=title)
+        End If
     End Sub
 
     Private Shared Sub WriteOutput(ByVal str As String)
