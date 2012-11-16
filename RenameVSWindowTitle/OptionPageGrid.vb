@@ -18,23 +18,23 @@ Imports System.ComponentModel
 Public Class OptionPageGrid
     Inherits DialogPage
 
-    Private _RewriteOnlyIfConflict As Boolean = False
+    Private _AlwaysRewriteTitles As Boolean = True
     <Category("General")>
-    <DisplayName("Only rewrite title if conflict")>
-    <Description("If two instances do not have the same solution/project file name (e.g. mysolution.sln and mysolution2.sln), and this option is set to false, their title will not be rewritten. It is possible that a conflict can still be detected if patterns have been customized.")>
-    Public Property RewriteOnlyIfConflict() As Boolean
+    <DisplayName("Always rewrite titles")>
+    <Description("If set to true, will rewrite titles even if no conflict is detected. Default: true. Conflicts may not be detected if patterns have been changed from the default.")>
+    Public Property AlwaysRewriteTitles() As Boolean
         Get
-            Return Me._RewriteOnlyIfConflict
+            Return Me._AlwaysRewriteTitles
         End Get
         Set(ByVal value As Boolean)
-            Me._RewriteOnlyIfConflict = value
+            Me._AlwaysRewriteTitles = value
         End Set
     End Property
 
     Private _MinNumberOfInstances As Integer = 2
     <Category("General")>
     <DisplayName("Activation threshold")>
-    <Description("Min number of instances to activate extension. Default: 2.")>
+    <Description("Min number of instances that need to be opened to rewrite titles, if they are in conflict or if ""Always rewrite titles"" is set to true. Default: 2.")>
     Public Property MinNumberOfInstances() As Integer
         Get
             Return Me._MinNumberOfInstances

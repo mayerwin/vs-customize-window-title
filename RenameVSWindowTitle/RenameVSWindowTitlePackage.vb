@@ -164,19 +164,19 @@ Public NotInheritable Class RenameVSWindowTitle
             Dim m = New Regex("^(.*)\\(.*) - (" + Me.DTE.Name + ".*) \*$", RegexOptions.RightToLeft).Match(str)
             If (m.Success) AndAlso m.Groups.Count >= 4 Then
                 Dim name = m.Groups(2).Captures(0).Value
-                Dim state = GetVSState(str).ToString()
+                Dim state = GetVSState(str)
                 Return name.Substring(0, name.Length - If(String.IsNullOrEmpty(state), 0, state.Length + 3))
             Else
                 m = New Regex("^(.*) - (" + Me.DTE.Name + ".*) \*$", RegexOptions.RightToLeft).Match(str)
                 If (m.Success) AndAlso m.Groups.Count >= 3 Then
                     Dim name = m.Groups(1).Captures(0).Value
-                    Dim state = GetVSState(str).ToString()
+                    Dim state = GetVSState(str)
                     Return name.Substring(0, name.Length - If(String.IsNullOrEmpty(state), 0, state.Length + 3))
                 Else
                     m = New Regex("^(.*) - (" + Me.DTE.Name + ".*)$", RegexOptions.RightToLeft).Match(str)
                     If (m.Success) AndAlso m.Groups.Count >= 3 Then
                         Dim name = m.Groups(1).Captures(0).Value
-                        Dim state = GetVSState(str).ToString()
+                        Dim state = GetVSState(str)
                         Return name.Substring(0, name.Length - If(String.IsNullOrEmpty(state), 0, state.Length + 3))
                     Else
                         If (Me.Settings.EnableDebugMode) Then WriteOutput("VSName not found: " & str & ".")
@@ -219,22 +219,18 @@ Public NotInheritable Class RenameVSWindowTitle
             Dim currentInstance = Diagnostics.Process.GetCurrentProcess()
 
             Dim vsInstances As Diagnostics.Process() = Diagnostics.Process.GetProcessesByName("devenv")
-            Dim conflict = False
-
-            If vsInstances.Count >= Me.Settings.MinNumberOfInstances Then
+            Dim rewrite = False
+            If Me.Settings.AlwaysRewriteTitles Then
+                rewrite = True
+            ElseIf vsInstances.Count >= Me.Settings.MinNumberOfInstances Then
                 'Check if multiple instances of devenv have identical original names. If so, then rewrite the title of current instance (normally the extension will run on each instance so no need to rewrite them as well). Otherwise do not rewrite the title.
                 'The best would be to get the EnvDTE.DTE object of the other instances, and compare the solution or project names directly instead of relying on window titles (which may be hacked by third party software as well).
                 Dim currentInstanceName = Path.GetFileNameWithoutExtension(Me.DTE.Solution.FullName)
-                If Me.Settings.RewriteOnlyIfConflict AndAlso Not String.IsNullOrEmpty(currentInstanceName) Then
-                    For Each vsInstanceName In From vsInstance In vsInstances Where vsInstance.Id <> currentInstance.Id Select GetVSSolutionName(vsInstance.MainWindowTitle())
-                        If (vsInstanceName IsNot Nothing) AndAlso (currentInstanceName = vsInstanceName) Then
-                            conflict = True
-                        Else
-                            conflict = False
-                        End If
-                    Next
-                Else
-                    conflict = True
+                If String.IsNullOrEmpty(currentInstanceName) Then
+                    rewrite = True
+                ElseIf (From vsInstance In vsInstances Where vsInstance.Id <> currentInstance.Id
+                        Select GetVSSolutionName(vsInstance.MainWindowTitle())).Any(Function(vsInstanceName) vsInstanceName IsNot Nothing AndAlso currentInstanceName = vsInstanceName) Then
+                    rewrite = True
                 End If
             End If
             Dim pattern As String
@@ -243,17 +239,17 @@ Public NotInheritable Class RenameVSWindowTitle
                 Dim document = Me.DTE.ActiveDocument
                 Dim window = Me.DTE.ActiveWindow
                 If ((document Is Nothing OrElse String.IsNullOrEmpty(document.FullName)) AndAlso (window Is Nothing OrElse String.IsNullOrEmpty(window.Caption))) Then
-                    pattern = If(conflict, Me.Settings.PatternIfNothingOpen, "[ideName]")
+                    pattern = If(rewrite, Me.Settings.PatternIfNothingOpen, "[ideName]")
                 Else
-                    pattern = If(conflict, Me.Settings.PatternIfDocumentButNoSolutionOpen, "[documentName] - [ideName]")
+                    pattern = If(rewrite, Me.Settings.PatternIfDocumentButNoSolutionOpen, "[documentName] - [ideName]")
                 End If
             Else
                 If (Me.DTE.Debugger Is Nothing OrElse Me.DTE.Debugger.CurrentMode = dbgDebugMode.dbgDesignMode) Then
-                    pattern = If(conflict, Me.Settings.PatternIfDesignMode, "[parentPath]\[solutionName] - [ideName]")
+                    pattern = If(rewrite, Me.Settings.PatternIfDesignMode, "[solutionName] - [ideName]")
                 ElseIf (Me.DTE.Debugger.CurrentMode = dbgDebugMode.dbgBreakMode) Then
-                    pattern = If(conflict, Me.Settings.PatternIfBreakMode, "[parentPath]\[solutionName] (Debugging) - [ideName]")
+                    pattern = If(rewrite, Me.Settings.PatternIfBreakMode, "[solutionName] (Debugging) - [ideName]")
                 ElseIf (Me.DTE.Debugger.CurrentMode = dbgDebugMode.dbgRunMode) Then
-                    pattern = If(conflict, Me.Settings.PatternIfRunningMode, "[parentPath]\[solutionName] (Running) - [ideName]")
+                    pattern = If(rewrite, Me.Settings.PatternIfRunningMode, "[solutionName] (Running) - [ideName]")
                 Else
                     Throw New Exception("No matching state found")
                 End If
