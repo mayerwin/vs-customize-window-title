@@ -194,7 +194,7 @@ Public NotInheritable Class RenameVSWindowTitle
     Private Function GetVSState(ByVal str As String) As String
         Try
             Dim m = New Regex(" \((.*)\) - (" + Me.DTE.Name + ".*) \*$", RegexOptions.RightToLeft).Match(str)
-            If (Not m.Success) Then m = New Regex(" \((.*)\) - (Microsoft.*)$", RegexOptions.RightToLeft).Match(str)
+            If (Not m.Success) Then m = New Regex(" \((.*)\) - (" + Me.DTE.Name + ".*)$", RegexOptions.RightToLeft).Match(str)
             If (m.Success) AndAlso m.Groups.Count >= 3 Then
                 Return m.Groups(1).Captures(0).Value
             Else
@@ -214,10 +214,10 @@ Public NotInheritable Class RenameVSWindowTitle
         If (Me.IDEName Is Nothing AndAlso Me.DTE.MainWindow IsNot Nothing) Then
             Me.IDEName = GetIDEName(Me.DTE.MainWindow.Caption)
         End If
+        If (Me.IDEName Is Nothing) Then Return
         If (Not Monitor.TryEnter(UpdateWindowTitleLock)) Then Return
         Try
             Dim currentInstance = Diagnostics.Process.GetCurrentProcess()
-
             Dim vsInstances As Diagnostics.Process() = Diagnostics.Process.GetProcessesByName("devenv")
             Dim rewrite = False
             If Me.Settings.AlwaysRewriteTitles Then
