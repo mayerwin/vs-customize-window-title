@@ -146,10 +146,15 @@ Public NotInheritable Class RenameVSWindowTitle
             Dim m = New Regex("^(.*) - (" + Me.DTE.Name + ".*) \*$", RegexOptions.RightToLeft).Match(str)
             If (Not m.Success) Then m = New Regex("^(.*) - (" + Me.DTE.Name + ".* \(.+\)) \(.+\)$", RegexOptions.RightToLeft).Match(str)
             If (Not m.Success) Then m = New Regex("^(.*) - (" + Me.DTE.Name + ".*)$", RegexOptions.RightToLeft).Match(str)
-            If (m.Success) AndAlso m.Groups.Count >= 3 Then
-                Return m.Groups(2).Captures(0).Value
+            If (Not m.Success) Then m = New Regex("^(" + Me.DTE.Name + ".*)$", RegexOptions.RightToLeft).Match(str)
+            If (m.Success) AndAlso m.Groups.Count >= 2 Then
+                If (m.Groups.Count >= 3) Then
+                    Return m.Groups(2).Captures(0).Value
+                ElseIf (m.Groups.Count >= 2) Then
+                    Return m.Groups(1).Captures(0).Value
+                End If
             Else
-                If (Me.Settings.EnableDebugMode) Then WriteOutput("IDE name not found: " & str & ".")
+                If (Me.Settings.EnableDebugMode) Then WriteOutput("IDE name (" + Me.DTE.Name + ") not found: " & str & ".")
                 Return Nothing
             End If
         Catch ex As Exception
@@ -256,7 +261,7 @@ Public NotInheritable Class RenameVSWindowTitle
             End If
             Me.ChangeWindowTitle(GetNewTitle(pattern:=pattern))
         Catch ex As Exception
-            If (Me.Settings.EnableDebugMode) Then WriteOutput("UpdateWindowTitle Exception: " + ex.ToString())
+            If (Me.Settings.EnableDebugMode) Then WriteOutput("UpdateWindowTitle exception: " + ex.ToString())
         Finally
             Monitor.Exit(UpdateWindowTitleLock)
         End Try
@@ -277,8 +282,10 @@ Public NotInheritable Class RenameVSWindowTitle
             End If
         Else
             Dim window = Me.DTE.ActiveWindow
-            If (window IsNot Nothing) Then
+            If (window IsNot Nothing AndAlso window.Caption <> Me.DTE.MainWindow.Caption) Then
                 documentName = window.Caption
+            ElseIf (solution Is Nothing OrElse String.IsNullOrEmpty(solution.FullName)) Then
+                Return Me.IDEName
             End If
         End If
         If (solution IsNot Nothing AndAlso Not String.IsNullOrEmpty(solution.FullName)) Then
