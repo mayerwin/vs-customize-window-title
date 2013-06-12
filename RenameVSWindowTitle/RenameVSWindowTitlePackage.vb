@@ -293,17 +293,14 @@ Public NotInheritable Class RenameVSWindowTitle
             Dim parents = Path.GetDirectoryName(Me.DTE.Solution.FullName).Split(Path.DirectorySeparatorChar).Reverse().ToArray()
             parentPath = GetParentPath(parents:=parents)
             pattern = ReplaceParentTags(pattern:=pattern, parents:=parents)
-            If (solution.Projects.Count > 0) Then
-                Dim configuration As Configuration = Nothing
-                For i As Integer = 1 To solution.Projects.Count
-                    Dim configurationManager = solution.Projects.Item(i).ConfigurationManager
-                    If configurationManager Is Nothing Then Continue For
-                    configuration = configurationManager.ActiveConfiguration
-                    If (configuration IsNot Nothing) Then Exit For
-                Next
-                If configuration IsNot Nothing Then
-                    pattern = pattern.Replace("[configurationName]", configuration.ConfigurationName) _
-                                     .Replace("[platformName]", configuration.PlatformName)
+            Dim activeConfig = DTE.Solution.Properties.Item("ActiveConfig").Value
+            If (activeConfig IsNot Nothing) Then
+                Dim activeConfiguration = activeConfig.ToString().Split(CType("|", Char()))
+                If (activeConfiguration.Length = 2) Then
+                    Dim configurationName = activeConfiguration(0)
+                    Dim platformName = activeConfiguration(1)
+                    pattern = pattern.Replace("[configurationName]", configurationName) _
+                                     .Replace("[platformName]", platformName)
                 End If
             End If
         End If
