@@ -294,8 +294,17 @@ Public NotInheritable Class RenameVSWindowTitle
             parentPath = GetParentPath(parents:=parents)
             pattern = ReplaceParentTags(pattern:=pattern, parents:=parents)
             If (solution.Projects.Count > 0) Then
-                pattern = pattern.Replace("[configurationName]", solution.Projects.Item(1).ConfigurationManager.ActiveConfiguration.ConfigurationName) _
-                                 .Replace("[platformName]", solution.Projects.Item(1).ConfigurationManager.ActiveConfiguration.PlatformName)
+                Dim configuration As Configuration = Nothing
+                For i As Integer = 1 To solution.Projects.Count
+                    Dim configurationManager = solution.Projects.Item(i).ConfigurationManager
+                    If configurationManager Is Nothing Then Continue For
+                    configuration = configurationManager.ActiveConfiguration
+                    If (configuration IsNot Nothing) Then Exit For
+                Next
+                If configuration IsNot Nothing Then
+                    pattern = pattern.Replace("[configurationName]", configuration.ConfigurationName) _
+                                     .Replace("[platformName]", configuration.PlatformName)
+                End If
             End If
         End If
         Return pattern.Replace("[documentName]", documentName) _
