@@ -143,7 +143,7 @@ Public NotInheritable Class RenameVSWindowTitle
 
     Private Function GetIDEName(ByVal str As String) As String
         Try
-            Dim m = New Regex("^(.*) - (" + Me.DTE.Name + ".*) \*$", RegexOptions.RightToLeft).Match(str)
+            Dim m = New Regex("^(.*) - (" + Me.DTE.Name + ".*) " + Regex.Escape(Me.Settings.AppendedString) + "$", RegexOptions.RightToLeft).Match(str)
             If (Not m.Success) Then m = New Regex("^(.*) - (" + Me.DTE.Name + ".* \(.+\)) \(.+\)$", RegexOptions.RightToLeft).Match(str)
             If (Not m.Success) Then m = New Regex("^(.*) - (" + Me.DTE.Name + ".*)$", RegexOptions.RightToLeft).Match(str)
             If (Not m.Success) Then m = New Regex("^(" + Me.DTE.Name + ".*)$", RegexOptions.RightToLeft).Match(str)
@@ -166,13 +166,13 @@ Public NotInheritable Class RenameVSWindowTitle
 
     Private Function GetVSSolutionName(ByVal str As String) As String
         Try
-            Dim m = New Regex("^(.*)\\(.*) - (" + Me.DTE.Name + ".*) \*$", RegexOptions.RightToLeft).Match(str)
+            Dim m = New Regex("^(.*)\\(.*) - (" + Me.DTE.Name + ".*) " + Regex.Escape(Me.Settings.AppendedString) + "$", RegexOptions.RightToLeft).Match(str)
             If (m.Success) AndAlso m.Groups.Count >= 4 Then
                 Dim name = m.Groups(2).Captures(0).Value
                 Dim state = GetVSState(str)
                 Return name.Substring(0, name.Length - If(String.IsNullOrEmpty(state), 0, state.Length + 3))
             Else
-                m = New Regex("^(.*) - (" + Me.DTE.Name + ".*) \*$", RegexOptions.RightToLeft).Match(str)
+                m = New Regex("^(.*) - (" + Me.DTE.Name + ".*) " + Regex.Escape(Me.Settings.AppendedString) + "$", RegexOptions.RightToLeft).Match(str)
                 If (m.Success) AndAlso m.Groups.Count >= 3 Then
                     Dim name = m.Groups(1).Captures(0).Value
                     Dim state = GetVSState(str)
@@ -198,7 +198,7 @@ Public NotInheritable Class RenameVSWindowTitle
 
     Private Function GetVSState(ByVal str As String) As String
         Try
-            Dim m = New Regex(" \((.*)\) - (" + Me.DTE.Name + ".*) \*$", RegexOptions.RightToLeft).Match(str)
+            Dim m = New Regex(" \((.*)\) - (" + Me.DTE.Name + ".*) " + Regex.Escape(Me.Settings.AppendedString) + "$", RegexOptions.RightToLeft).Match(str)
             If (Not m.Success) Then m = New Regex(" \((.*)\) - (" + Me.DTE.Name + ".*)$", RegexOptions.RightToLeft).Match(str)
             If (m.Success) AndAlso m.Groups.Count >= 3 Then
                 Return m.Groups(1).Captures(0).Value
@@ -293,8 +293,14 @@ Public NotInheritable Class RenameVSWindowTitle
             Dim parents = Path.GetDirectoryName(Me.DTE.Solution.FullName).Split(Path.DirectorySeparatorChar).Reverse().ToArray()
             parentPath = GetParentPath(parents:=parents)
             pattern = ReplaceParentTags(pattern:=pattern, parents:=parents)
+            If (solution.Projects.Count > 0) Then
+                pattern = pattern.Replace("[configurationName]", solution.Projects.Item(1).ConfigurationManager.ActiveConfiguration.ConfigurationName) _
+                                 .Replace("[platformName]", solution.Projects.Item(1).ConfigurationManager.ActiveConfiguration.PlatformName)
+            End If
         End If
-        Return pattern.Replace("[documentName]", documentName).Replace("[solutionName]", solutionName).Replace("[parentPath]", parentPath).Replace("[ideName]", Me.IDEName) + " *"
+        Return pattern.Replace("[documentName]", documentName) _
+                      .Replace("[solutionName]", solutionName) _
+                      .Replace("[parentPath]", parentPath).Replace("[ideName]", Me.IDEName) + " " + Me.Settings.AppendedString
     End Function
 
     Private Function GetParentPath(ByVal parents As String()) As String

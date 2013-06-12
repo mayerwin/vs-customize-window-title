@@ -73,7 +73,7 @@ Public Class OptionPageGrid
     Private _PatternIfNothingOpen As String = "[ideName]"
     <Category("Patterns")>
     <DisplayName("No document or solution open")>
-    <Description("Special tags: [documentName] name of the active document or window; [solutionName] name of the active solution; [parentX] parent folder at the specified depth X, e.g. 1 for document/solution file parent folder; [parentPath] current solution path or, if no solution open, document path, with depth range as set in settings; [ideName]. Default: [ideName].")>
+    <Description("Special tags: [documentName] name of the active document or window; [solutionName] name of the active solution; [parentX] parent folder at the specified depth X, e.g. 1 for document/solution file parent folder; [parentPath] current solution path or, if no solution open, document path, with depth range as set in settings; [ideName]; [configurationName] (e.g. Release); [platformName] (e.g. x86). Default: [ideName].")>
     Public Property PatternIfNothingOpen() As String
         Get
             Return Me._PatternIfNothingOpen
@@ -86,7 +86,7 @@ Public Class OptionPageGrid
     Private _PatternIfDocumentButNoSolutionOpen As String = "[documentName] - [ideName]"
     <Category("Patterns")>
     <DisplayName("Document (no solution) open")>
-    <Description("Special tags: [documentName] name of the active document or window; [solutionName] name of the active solution; [parentX] parent folder at the specified depth X, e.g. 1 for document/solution file parent folder; [parentPath] current solution path or, if no solution open, document path, with depth range as set in settings; [ideName]. Default: [documentName] - [ideName].")>
+    <Description("Special tags: [documentName] name of the active document or window; [solutionName] name of the active solution; [parentX] parent folder at the specified depth X, e.g. 1 for document/solution file parent folder; [parentPath] current solution path or, if no solution open, document path, with depth range as set in settings; [ideName]; [configurationName] (e.g. Release); [platformName] (e.g. x86). Default: [documentName] - [ideName].")>
     Public Property PatternIfDocumentButNoSolutionOpen() As String
         Get
             Return Me._PatternIfDocumentButNoSolutionOpen
@@ -99,7 +99,7 @@ Public Class OptionPageGrid
     Private _PatternIfDesignMode As String = "[parentPath]\[solutionName] - [ideName]"
     <Category("Patterns")>
     <DisplayName("Solution in design mode")>
-    <Description("Special tags: [documentName] name of the active document or window; [solutionName] name of the active solution; [parentX] parent folder at the specified depth X, e.g. 1 for document/solution file parent folder; [parentPath] current solution path or, if no solution open, document path, with depth range as set in settings; [ideName]. Default: [parentPath]\[solutionName] - [ideName].")>
+    <Description("Special tags: [documentName] name of the active document or window; [solutionName] name of the active solution; [parentX] parent folder at the specified depth X, e.g. 1 for document/solution file parent folder; [parentPath] current solution path or, if no solution open, document path, with depth range as set in settings; [ideName]; [configurationName] (e.g. Release); [platformName] (e.g. x86). Default: [parentPath]\[solutionName] - [ideName].")>
     Public Property PatternIfDesignMode() As String
         Get
             Return Me._PatternIfDesignMode
@@ -112,7 +112,7 @@ Public Class OptionPageGrid
     Private _PatternIfBreakMode As String = "[parentPath]\[solutionName] (Debugging) - [ideName]"
     <Category("Patterns")>
     <DisplayName("Solution in break mode")>
-    <Description("Special tags: [documentName] name of the active document or window; [solutionName] name of the active solution; [parentX] parent folder at the specified depth X, e.g. 1 for document/solution file parent folder; [parentPath] current solution path or, if no solution open, document path, with depth range as set in settings; [ideName]. Default: [parentPath]\[solutionName] (Debugging) - [ideName]. ' *' will be added at the end automatically to identify that the title is being improved.")>
+    <Description("Special tags: [documentName] name of the active document or window; [solutionName] name of the active solution; [parentX] parent folder at the specified depth X, e.g. 1 for document/solution file parent folder; [parentPath] current solution path or, if no solution open, document path, with depth range as set in settings; [ideName]; [configurationName] (e.g. Release); [platformName] (e.g. x86). Default: [parentPath]\[solutionName] (Debugging) - [ideName]. The appended string parameter will be added at the end automatically to identify that the title is being improved.")>
     Public Property PatternIfBreakMode() As String
         Get
             Return Me._PatternIfBreakMode
@@ -125,13 +125,26 @@ Public Class OptionPageGrid
     Private _PatternIfRunningMode As String = "[parentPath]\[solutionName] (Running) - [ideName]"
     <Category("Patterns")>
     <DisplayName("Solution in running mode")>
-    <Description("Special tags: [documentName] name of the active document or window; [solutionName] name of the active solution; [parentX] parent folder at the specified depth X, e.g. 1 for document/solution file parent folder; [parentPath] current solution path or, if no solution open, document path, with depth range as set in settings; [ideName]. Default: [parentPath]\[solutionName] (Running) - [ideName]. ' *' will be added at the end automatically to identify that the title is being improved.")>
+    <Description("Special tags: [documentName] name of the active document or window; [solutionName] name of the active solution; [parentX] parent folder at the specified depth X, e.g. 1 for document/solution file parent folder; [parentPath] current solution path or, if no solution open, document path, with depth range as set in settings; [ideName]; [configurationName] (e.g. Release); [platformName] (e.g. x86). Default: [parentPath]\[solutionName] (Running) - [ideName]. The appended string parameter will be added at the end automatically to identify that the title is being improved.")>
     Public Property PatternIfRunningMode() As String
         Get
             Return Me._PatternIfRunningMode
         End Get
         Set(ByVal value As String)
             Me._PatternIfRunningMode = value
+        End Set
+    End Property
+
+    Private _AppendedString As String = "*"
+    <Category("Patterns")>
+    <DisplayName("Appended string")>
+    <Description("String to be added at the end of the title to identify that it has been rewritten. If not default and Always rewrite titles, the detection of concurrent instances with the same title may not work. Default: '*'.")>
+    Public Property AppendedString() As String
+        Get
+            Return Me._AppendedString
+        End Get
+        Set(ByVal value As String)
+            Me._AppendedString = value
         End Set
     End Property
 
