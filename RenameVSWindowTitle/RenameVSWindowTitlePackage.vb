@@ -289,6 +289,10 @@ Public NotInheritable Class RenameVSWindowTitle
             End If
         End If
         If (solution IsNot Nothing AndAlso Not String.IsNullOrEmpty(solution.FullName)) Then
+            Dim project = GetActiveProject(Me.DTE)
+            If (project IsNot Nothing) Then
+                pattern = pattern.Replace("[activeProjectName]", project.Name)
+            End If
             solutionName = Path.GetFileNameWithoutExtension(solution.FullName)
             Dim parents = Path.GetDirectoryName(Me.DTE.Solution.FullName).Split(Path.DirectorySeparatorChar).Reverse().ToArray()
             parentPath = GetParentPath(parents:=parents)
@@ -364,6 +368,17 @@ Public NotInheritable Class RenameVSWindowTitle
             Return buff.ToString()
         End If
         Return Nothing
+    End Function
+
+    Private Shared Function GetActiveProject(dte As DTE2) As Project
+        Dim activeProject As Project = Nothing
+
+        Dim activeSolutionProjects As Array = TryCast(dte.ActiveSolutionProjects, Array)
+        If activeSolutionProjects IsNot Nothing AndAlso activeSolutionProjects.Length > 0 Then
+            activeProject = TryCast(activeSolutionProjects.GetValue(0), Project)
+        End If
+
+        Return activeProject
     End Function
 
     <DllImport("user32.dll")>
