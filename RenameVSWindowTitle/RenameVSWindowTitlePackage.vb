@@ -1,13 +1,17 @@
 ﻿Imports System.Runtime.InteropServices
+Imports System.ComponentModel
 Imports EnvDTE
 Imports EnvDTE80
 Imports System.IO
+Imports System.ComponentModel.Composition.Hosting
 Imports Microsoft.VisualStudio.Shell.Interop
 Imports Microsoft.VisualStudio.Shell
 Imports Microsoft.VisualStudio
 Imports System.Threading
 Imports System.Text
 Imports System.Text.RegularExpressions
+Imports Microsoft.VisualStudio.TeamFoundation.VersionControl
+Imports System.Reflection
 
 ''' <summary>
 ''' This is the class that implements the package exposed by this assembly.
@@ -46,6 +50,7 @@ Public NotInheritable Class RenameVSWindowTitle
     Private IDEName As String
 
     Private ResetTitleTimer As System.Windows.Forms.Timer
+    'Private VersionSpecificAssembly As Assembly
 
     ''' <summary>
     ''' Default constructor of the package.
@@ -132,6 +137,17 @@ Public NotInheritable Class RenameVSWindowTitle
         'Every 5 seconds, we check the window titles in case we missed an event.
         Me.ResetTitleTimer = New System.Windows.Forms.Timer() With {.Interval = 5000}
         AddHandler Me.ResetTitleTimer.Tick, AddressOf Me.UpdateWindowTitle
+        'Dim assemblyFilename As FileInfo
+        'If IsVisualStudio2010 Then
+        '    assemblyFilename = New FileInfo(Path.Combine(Path.GetDirectoryName(Me.GetType().Assembly.Location), "RenameVSWindowTitle.v10.dll"))
+        '    VersionSpecificAssembly = Assembly.LoadFrom(assemblyFilename.FullName)
+        'ElseIf IsVisualStudio2012 Then
+        '    assemblyFilename = New FileInfo(Path.Combine(Path.GetDirectoryName(Me.GetType().Assembly.Location), "RenameVSWindowTitle.v11.dll"))
+        '    VersionSpecificAssembly = Assembly.LoadFrom(assemblyFilename.FullName)
+        'ElseIf IsVisualStudio2013 Then
+        '    assemblyFilename = New FileInfo(Path.Combine(Path.GetDirectoryName(Me.GetType().Assembly.Location), "RenameVSWindowTitle.v12.dll"))
+        '    VersionSpecificAssembly = Assembly.LoadFrom(assemblyFilename.FullName)
+        'End If
         Me.ResetTitleTimer.Start()
     End Sub
 
@@ -289,9 +305,11 @@ Public NotInheritable Class RenameVSWindowTitle
             End If
         End If
         If (solution IsNot Nothing AndAlso Not String.IsNullOrEmpty(solution.FullName)) Then
-            Dim project = GetActiveProject(Me.DTE)
-            If (project IsNot Nothing) Then
-                pattern = pattern.Replace("[activeProjectName]", project.Name)
+            If (pattern.Contains("[projectName]")) Then
+                Dim project = GetActiveProject(Me.DTE)
+                If (project IsNot Nothing) Then
+                    pattern = pattern.Replace("[projectName]", project.Name)
+                End If
             End If
             solutionName = Path.GetFileNameWithoutExtension(solution.FullName)
             Dim parents = Path.GetDirectoryName(Me.DTE.Solution.FullName).Split(Path.DirectorySeparatorChar).Reverse().ToArray()
@@ -307,6 +325,30 @@ Public NotInheritable Class RenameVSWindowTitle
                                      .Replace("[platformName]", platformName)
                 End If
             End If
+            If (pattern.Contains("[gitBranchName]")) Then
+                Try
+                    Dim workingDirectory = New FileInfo(solution.FullName).DirectoryName
+                    If (Not IsGitRepository(workingDirectory)) Then
+                        pattern = pattern.Replace("[gitBranchName]", "")
+                    Else
+                        pattern = pattern.Replace("[gitBranchName]", GetGitBranch(workingDirectory))
+                    End If
+                Catch ex As Exception
+                    If (Me.Settings.EnableDebugMode) Then WriteOutput("[gitBranchName] Exception: " + ex.ToString())
+                End Try
+            End If
+        End If
+        If (pattern.Contains("[workspaceName]")) Then
+            Try
+                'Dim catalog = New AssemblyCatalog(Me.VersionSpecificAssembly)
+                'Dim container = New CompositionContainer(catalog)
+                Dim vce As Object = Me.DTE.GetObject("Microsoft.VisualStudio.TeamFoundation.VersionControl.VersionControlExt") ' , VersionControlExt)
+                If (vce IsNot Nothing AndAlso vce.SolutionWorkspace IsNot Nothing) Then
+                    pattern = pattern.Replace("[workspaceName]", vce.SolutionWorkspace.Name)
+                End If
+            Catch ex As Exception
+                If (Me.Settings.EnableDebugMode) Then WriteOutput("[workspaceName] Exception: " + ex.ToString())
+            End Try
         End If
         Return pattern.Replace("[documentName]", documentName) _
                       .Replace("[solutionName]", solutionName) _
@@ -314,6 +356,7 @@ Public NotInheritable Class RenameVSWindowTitle
     End Function
 
     Private Function GetParentPath(ByVal parents As String()) As String
+        'TODO: handle drive letter better if (path1.Substring(path1.Length - 1, 1) == ":") path1 += System.IO.Path.DirectorySeparatorChar; http://stackoverflow.com/questions/1527942/why-path-combine-doesnt-add-the-path-directoryseparatorchar-after-the-drive-des?rq=1
         Return Path.Combine(parents.Skip(Me.Settings.ClosestParentDepth - 1).Take(Me.Settings.FarthestParentDepth - Me.Settings.ClosestParentDepth + 1).Reverse().ToArray())
     End Function
 
@@ -370,21 +413,122 @@ Public NotInheritable Class RenameVSWindowTitle
         Return Nothing
     End Function
 
+    Private Shared Function GetGitBranch(ByVal workingDirectory As String) As String
+        'Create process
+        'Dim pProcess = New ProcessStartInfo("git.exe")
+        Dim pProcess As New Diagnostics.Process()
+
+        'strCommand is path and file name of command to run
+        pProcess.StartInfo.FileName = "git.exe"
+
+        'strCommandParameters are parameters to pass to program
+        pProcess.StartInfo.Arguments = "branch"
+
+        pProcess.StartInfo.UseShellExecute = False
+
+        'Set output of program to be written to process output stream
+        pProcess.StartInfo.RedirectStandardOutput = True
+        pProcess.StartInfo.CreateNoWindow = True
+
+        'Optional
+        pProcess.StartInfo.WorkingDirectory = workingDirectory
+
+        'Start the process
+        pProcess.Start()
+
+        'Get program output
+        Dim branchName As String = pProcess.StandardOutput.ReadToEnd().Substring(2).TrimEnd(" ", vbLf)
+
+        'Wait for process to finish
+        pProcess.WaitForExit()
+
+        Return branchName
+    End Function
+
+    Private Shared Function IsGitRepository(ByVal workingDirectory As String) As Boolean
+        'Create process
+        'Dim pProcess = New ProcessStartInfo("git.exe")
+        Dim pProcess As New Diagnostics.Process()
+
+        'strCommand is path and file name of command to run
+        pProcess.StartInfo.FileName = "git.exe"
+
+        'strCommandParameters are parameters to pass to program
+        pProcess.StartInfo.Arguments = "rev-parse --is-inside-work-tree"
+
+        pProcess.StartInfo.UseShellExecute = False
+
+        'Set output of program to be written to process output stream
+        pProcess.StartInfo.RedirectStandardOutput = True
+        pProcess.StartInfo.CreateNoWindow = True
+
+        'Optional
+        pProcess.StartInfo.WorkingDirectory = workingDirectory
+
+        'Start the process
+        pProcess.Start()
+
+        'Get program output
+        Dim res As String = pProcess.StandardOutput.ReadToEnd().TrimEnd(" ", vbLf)
+
+        'Wait for process to finish
+        pProcess.WaitForExit()
+
+        Return res = "true"
+    End Function
+
     Private Shared Function GetActiveProject(dte As DTE2) As Project
         Dim activeProject As Project = Nothing
-
-        Dim activeSolutionProjects As Array = TryCast(dte.ActiveSolutionProjects, Array)
-        If activeSolutionProjects IsNot Nothing AndAlso activeSolutionProjects.Length > 0 Then
-            activeProject = TryCast(activeSolutionProjects.GetValue(0), Project)
-        End If
-
-        Return activeProject
+        Try
+            If (dte.ActiveSolutionProjects IsNot Nothing) Then
+                Dim activeSolutionProjects As Array = TryCast(dte.ActiveSolutionProjects, Array)
+                If activeSolutionProjects IsNot Nothing AndAlso activeSolutionProjects.Length > 0 Then
+                    activeProject = TryCast(activeSolutionProjects.GetValue(0), Project)
+                End If
+            End If
+            Return activeProject
+        Catch
+            Return Nothing
+        End Try
     End Function
 
     <DllImport("user32.dll")>
     Private Shared Function GetWindowText(hWnd As IntPtr, text As StringBuilder, count As Integer) As Integer
     End Function
 
+    Private MaxVsVersion As Integer = 15
+
+    Protected ReadOnly Property IsVisualStudio2010() As Boolean
+        Get
+            Return GetMajorVsVersion() = 10
+        End Get
+    End Property
+
+    Protected ReadOnly Property IsVisualStudio2012() As Boolean
+        Get
+            Return GetMajorVsVersion() = 11
+        End Get
+    End Property
+
+    Protected ReadOnly Property IsVisualStudio2013() As Boolean
+        Get
+            Return GetMajorVsVersion() = 12
+        End Get
+    End Property
+
+    Private Function GetMajorVsVersion() As Integer
+        If (MaxVsVersion < 15) Then
+            Return MaxVsVersion
+        End If
+        Dim vsVersion As String = Me.DTE.Version
+        Dim version__1 As Version
+        If Version.TryParse(vsVersion, version__1) Then
+            MaxVsVersion = version__1.Major
+        Else
+            MaxVsVersion = 12
+        End If
+        Return MaxVsVersion
+    End Function
     '<DllImport("user32.dll")>
     'Private Shared Function GetShellWindow() As IntPtr
     'End Function
