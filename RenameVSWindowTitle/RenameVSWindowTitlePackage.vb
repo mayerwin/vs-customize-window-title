@@ -422,7 +422,7 @@ Public NotInheritable Class RenameVSWindowTitle
         pProcess.StartInfo.FileName = "git.exe"
 
         'strCommandParameters are parameters to pass to program
-        pProcess.StartInfo.Arguments = "branch"
+        pProcess.StartInfo.Arguments = "symbolic-ref --short -q HEAD" 'As per: http://git-blame.blogspot.sg/2013/06/checking-current-branch-programatically.html. Or: "rev-parse --abbrev-ref HEAD"
 
         pProcess.StartInfo.UseShellExecute = False
 
@@ -437,7 +437,7 @@ Public NotInheritable Class RenameVSWindowTitle
         pProcess.Start()
 
         'Get program output
-        Dim branchName As String = pProcess.StandardOutput.ReadToEnd().Substring(2).TrimEnd(" ", vbLf)
+        Dim branchName As String = pProcess.StandardOutput.ReadToEnd().TrimEnd(" ", vbLf)
 
         'Wait for process to finish
         pProcess.WaitForExit()
