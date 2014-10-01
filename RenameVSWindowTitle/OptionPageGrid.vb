@@ -31,10 +31,10 @@ Public Class OptionPageGrid
         End Set
     End Property
 
-    Private _MinNumberOfInstances As Integer = 2
+    Private _MinNumberOfInstances As Integer = 1
     <Category("General")>
     <DisplayName("Activation threshold")>
-    <Description("Min number of instances that need to be opened to rewrite titles, if they are in conflict or if ""Always rewrite titles"" is set to true. Default: 2.")>
+    <Description("Min number of instances that need to be opened to rewrite titles, if they are in conflict or if ""Always rewrite titles"" is set to true. Default: 1.")>
     Public Property MinNumberOfInstances() As Integer
         Get
             Return Me._MinNumberOfInstances

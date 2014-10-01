@@ -342,10 +342,22 @@ Public NotInheritable Class RenameVSWindowTitle
             Try
                 'Dim catalog = New AssemblyCatalog(Me.VersionSpecificAssembly)
                 'Dim container = New CompositionContainer(catalog)
-                Dim vce As Object = Me.DTE.GetObject("Microsoft.VisualStudio.TeamFoundation.VersionControl.VersionControlExt") ' , VersionControlExt)
-                If (vce IsNot Nothing AndAlso vce.SolutionWorkspace IsNot Nothing) Then
-                    pattern = pattern.Replace("[workspaceName]", vce.SolutionWorkspace.Name)
+                If GetMajorVsVersion() >= 10 Then
+                    Dim vce As Object = Me.DTE.GetObject("Microsoft.VisualStudio.TeamFoundation.VersionControl.VersionControlExt") ' , VersionControlExt)
+                    If (vce IsNot Nothing AndAlso vce.SolutionWorkspace IsNot Nothing) Then
+                        pattern = pattern.Replace("[workspaceName]", vce.SolutionWorkspace.Name)
+                    End If
+                Else
+                    Dim wst As Object = Me.DTE.GetObject("Microsoft.TeamFoundation.VersionControl.Client.Workstation") ' , VersionControlExt)
+                    If (wst IsNot Nothing) Then
+                        Dim ws = wst.Current.GetLocalWorkspaceInfo()
+                        If (ws IsNot Nothing) Then
+                            pattern = pattern.Replace("[workspaceName]", ws.Name)
+                        End If
+                    Else
+                    End If
                 End If
+                pattern = pattern.Replace("[workspaceName]", "")
             Catch ex As Exception
                 If (Me.Settings.EnableDebugMode) Then WriteOutput("[workspaceName] Exception: " + ex.ToString())
             End Try
