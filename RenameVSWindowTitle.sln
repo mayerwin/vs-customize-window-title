@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "RenameVSWindowTitle", "RenameVSWindowTitle\RenameVSWindowTitle.vbproj", "{185F79B2-DCC3-4A8E-A50E-6941989B81ED}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RenameVSWindowTitle.V10", "RenameVSWindowTitle.V10\RenameVSWindowTitle.V10.csproj", "{A8DBB5A8-555B-4C11-81D2-DF6B616AE9EB}"

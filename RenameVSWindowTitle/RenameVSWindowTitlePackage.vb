@@ -1,17 +1,13 @@
 ﻿Imports System.Runtime.InteropServices
-Imports System.ComponentModel
 Imports EnvDTE
 Imports EnvDTE80
 Imports System.IO
-Imports System.ComponentModel.Composition.Hosting
 Imports Microsoft.VisualStudio.Shell.Interop
 Imports Microsoft.VisualStudio.Shell
 Imports Microsoft.VisualStudio
 Imports System.Threading
 Imports System.Text
 Imports System.Text.RegularExpressions
-Imports Microsoft.VisualStudio.TeamFoundation.VersionControl
-Imports System.Reflection
 
 ''' <summary>
 ''' This is the class that implements the package exposed by this assembly.
@@ -36,6 +32,8 @@ Imports System.Reflection
     Guid(GuidList.guidRenameVSWindowTitle3PkgString)>
 <ProvideOptionPage(GetType(OptionPageGrid),
                    "Rename VS Window Title", "Rules", 0, 0, True)>
+<ProvideOptionPage(GetType(SupportedTagsGrid),
+                   "Rename VS Window Title", "Supported tags", 101, 1000, True)>
 Public NotInheritable Class RenameVSWindowTitle
     Inherits Package
 
@@ -80,27 +78,27 @@ Public NotInheritable Class RenameVSWindowTitle
         AddHandler _documentEvents.DocumentClosing, New _dispDocumentEvents_DocumentClosingEventHandler(AddressOf OnIdeEvent)
     End Sub
 
-    Private Sub OnIdeEvent(ByVal gotfocus As Window, ByVal lostfocus As Window)
+    Private Sub OnIdeEvent(gotfocus As Window, lostfocus As Window)
         OnIdeEvent()
     End Sub
 
-    Private Sub OnIdeEvent(ByVal document As Document)
+    Private Sub OnIdeEvent(document As Document)
         OnIdeEvent()
     End Sub
 
-    Private Sub OnIdeEvent(ByVal window As Window)
+    Private Sub OnIdeEvent(window As Window)
         OnIdeEvent()
     End Sub
 
-    Private Sub OnIdeEvent(ByVal oldname As String)
+    Private Sub OnIdeEvent(oldname As String)
         OnIdeEvent()
     End Sub
 
-    Private Sub OnIdeEvent(ByVal reason As dbgEventReason)
+    Private Sub OnIdeEvent(reason As dbgEventReason)
         OnIdeEvent()
     End Sub
 
-    Private Sub OnIdeEvent(ByVal reason As dbgEventReason, ByRef executionaction As dbgExecutionAction)
+    Private Sub OnIdeEvent(reason As dbgEventReason, ByRef executionaction As dbgExecutionAction)
         OnIdeEvent()
     End Sub
 
@@ -151,13 +149,13 @@ Public NotInheritable Class RenameVSWindowTitle
         Me.ResetTitleTimer.Start()
     End Sub
 
-    Private ReadOnly Property Settings() As OptionPageGrid
+    Private ReadOnly Property Settings As OptionPageGrid
         Get
             Return CType(GetDialogPage(GetType(OptionPageGrid)), OptionPageGrid)
         End Get
     End Property
 
-    Private Function GetIDEName(ByVal str As String) As String
+    Private Function GetIDEName(str As String) As String
         Try
             Dim m = New Regex("^(.*) - (" + Me.DTE.Name + ".*) " + Regex.Escape(Me.Settings.AppendedString) + "$", RegexOptions.RightToLeft).Match(str)
             If (Not m.Success) Then m = New Regex("^(.*) - (" + Me.DTE.Name + ".* \(.+\)) \(.+\)$", RegexOptions.RightToLeft).Match(str)
@@ -180,7 +178,7 @@ Public NotInheritable Class RenameVSWindowTitle
         End Try
     End Function
 
-    Private Function GetVSSolutionName(ByVal str As String) As String
+    Private Function GetVSSolutionName(str As String) As String
         Try
             Dim m = New Regex("^(.*)\\(.*) - (" + Me.DTE.Name + ".*) " + Regex.Escape(Me.Settings.AppendedString) + "$", RegexOptions.RightToLeft).Match(str)
             If (m.Success) AndAlso m.Groups.Count >= 4 Then
@@ -212,7 +210,7 @@ Public NotInheritable Class RenameVSWindowTitle
         End Try
     End Function
 
-    Private Function GetVSState(ByVal str As String) As String
+    Private Function GetVSState(str As String) As String
         Try
             Dim m = New Regex(" \((.*)\) - (" + Me.DTE.Name + ".*) " + Regex.Escape(Me.Settings.AppendedString) + "$", RegexOptions.RightToLeft).Match(str)
             If (Not m.Success) Then m = New Regex(" \((.*)\) - (" + Me.DTE.Name + ".*)$", RegexOptions.RightToLeft).Match(str)
@@ -231,7 +229,7 @@ Public NotInheritable Class RenameVSWindowTitle
 
     Private ReadOnly UpdateWindowTitleLock As Object = New Object()
 
-    Private Sub UpdateWindowTitle(ByVal state As Object, ByVal e As EventArgs)
+    Private Sub UpdateWindowTitle(state As Object, e As EventArgs)
         If (Me.IDEName Is Nothing AndAlso Me.DTE.MainWindow IsNot Nothing) Then
             Me.IDEName = GetIDEName(Me.DTE.MainWindow.Caption)
         End If
@@ -283,7 +281,7 @@ Public NotInheritable Class RenameVSWindowTitle
         End Try
     End Sub
 
-    Private Function GetNewTitle(ByVal pattern As String) As String
+    Private Function GetNewTitle(pattern As String) As String
         Dim solution = Me.DTE.Solution
         Dim parentPath = ""
         Dim documentName = ""
@@ -342,7 +340,7 @@ Public NotInheritable Class RenameVSWindowTitle
             Try
                 'Dim catalog = New AssemblyCatalog(Me.VersionSpecificAssembly)
                 'Dim container = New CompositionContainer(catalog)
-                If GetMajorVsVersion() >= 10 Then
+                If GetVsMajorVersion() >= 10 Then
                     Dim vce As Object = Me.DTE.GetObject("Microsoft.VisualStudio.TeamFoundation.VersionControl.VersionControlExt") ' , VersionControlExt)
                     If (vce IsNot Nothing AndAlso vce.SolutionWorkspace IsNot Nothing) Then
                         pattern = pattern.Replace("[workspaceName]", vce.SolutionWorkspace.Name)
@@ -362,17 +360,21 @@ Public NotInheritable Class RenameVSWindowTitle
                 If (Me.Settings.EnableDebugMode) Then WriteOutput("[workspaceName] Exception: " + ex.ToString())
             End Try
         End If
+        Dim vsMajorVersion = GetVsMajorVersion()
+        Dim vsMajorVersionYear = GetYearFromVsMajorVersion(vsMajorVersion)
         Return pattern.Replace("[documentName]", documentName) _
                       .Replace("[solutionName]", solutionName) _
+                      .Replace("[vsMajorVersion]", vsMajorVersion) _
+                      .Replace("[vsMajorVersionYear]", vsMajorVersionYear) _
                       .Replace("[parentPath]", parentPath).Replace("[ideName]", Me.IDEName) + " " + Me.Settings.AppendedString
     End Function
 
-    Private Function GetParentPath(ByVal parents As String()) As String
+    Private Function GetParentPath(parents As String()) As String
         'TODO: handle drive letter better if (path1.Substring(path1.Length - 1, 1) == ":") path1 += System.IO.Path.DirectorySeparatorChar; http://stackoverflow.com/questions/1527942/why-path-combine-doesnt-add-the-path-directoryseparatorchar-after-the-drive-des?rq=1
         Return Path.Combine(parents.Skip(Me.Settings.ClosestParentDepth - 1).Take(Me.Settings.FarthestParentDepth - Me.Settings.ClosestParentDepth + 1).Reverse().ToArray())
     End Function
 
-    Private Function ReplaceParentTags(ByVal pattern As String, ByVal parents As String()) As String
+    Private Function ReplaceParentTags(pattern As String, parents As String()) As String
         Dim matches = New Regex("\[parent([0-9]+)\]").Matches(pattern)
         For Each m As Match In matches
             If (Not m.Success) Then Continue For
@@ -384,7 +386,7 @@ Public NotInheritable Class RenameVSWindowTitle
         Return pattern
     End Function
 
-    Private Sub ChangeWindowTitle(ByVal title As String)
+    Private Sub ChangeWindowTitle(title As String)
         Try
             Dim dispatcher = System.Windows.Application.Current.Dispatcher
             If (dispatcher IsNot Nothing) Then
@@ -403,9 +405,9 @@ Public NotInheritable Class RenameVSWindowTitle
         End Try
     End Sub
 
-    Private Shared Sub WriteOutput(ByVal str As String)
+    Private Shared Sub WriteOutput(str As String)
         Try
-            Dim outWindow As IVsOutputWindow = TryCast(GetGlobalService(GetType(SVsOutputWindow)), IVsOutputWindow)
+            Dim outWindow = TryCast(GetGlobalService(GetType(SVsOutputWindow)), IVsOutputWindow)
             Dim generalPaneGuid As Guid = VSConstants.OutputWindowPaneGuid.DebugPane_guid
             ' P.S. There's also the VSConstants.GUID_OutWindowDebugPane available.
             Dim generalPane As IVsOutputWindowPane = Nothing
@@ -416,8 +418,8 @@ Public NotInheritable Class RenameVSWindowTitle
         End Try
     End Sub
 
-    Private Shared Function GetWindowTitle(ByVal hWnd As IntPtr) As String
-        Const nChars As Integer = 256
+    Private Shared Function GetWindowTitle(hWnd As IntPtr) As String
+        Const nChars = 256
         Dim buff As New StringBuilder(nChars)
         If GetWindowText(hWnd, buff, nChars) > 0 Then
             Return buff.ToString()
@@ -425,7 +427,7 @@ Public NotInheritable Class RenameVSWindowTitle
         Return Nothing
     End Function
 
-    Private Shared Function GetGitBranch(ByVal workingDirectory As String) As String
+    Private Shared Function GetGitBranch(workingDirectory As String) As String
         'Create process
         'Dim pProcess = New ProcessStartInfo("git.exe")
         Dim pProcess As New Diagnostics.Process()
@@ -457,7 +459,7 @@ Public NotInheritable Class RenameVSWindowTitle
         Return branchName
     End Function
 
-    Private Shared Function IsGitRepository(ByVal workingDirectory As String) As Boolean
+    Private Shared Function IsGitRepository(workingDirectory As String) As Boolean
         'Create process
         'Dim pProcess = New ProcessStartInfo("git.exe")
         Dim pProcess As New Diagnostics.Process()
@@ -493,7 +495,7 @@ Public NotInheritable Class RenameVSWindowTitle
         Dim activeProject As Project = Nothing
         Try
             If (dte.ActiveSolutionProjects IsNot Nothing) Then
-                Dim activeSolutionProjects As Array = TryCast(dte.ActiveSolutionProjects, Array)
+                Dim activeSolutionProjects = TryCast(dte.ActiveSolutionProjects, Array)
                 If activeSolutionProjects IsNot Nothing AndAlso activeSolutionProjects.Length > 0 Then
                     activeProject = TryCast(activeSolutionProjects.GetValue(0), Project)
                 End If
@@ -512,23 +514,46 @@ Public NotInheritable Class RenameVSWindowTitle
 
     Protected ReadOnly Property IsVisualStudio2010() As Boolean
         Get
-            Return GetMajorVsVersion() = 10
+            Return GetVsMajorVersion() = 10
         End Get
     End Property
 
     Protected ReadOnly Property IsVisualStudio2012() As Boolean
         Get
-            Return GetMajorVsVersion() = 11
+            Return GetVsMajorVersion() = 11
         End Get
     End Property
 
     Protected ReadOnly Property IsVisualStudio2013() As Boolean
         Get
-            Return GetMajorVsVersion() = 12
+            Return GetVsMajorVersion() = 12
         End Get
     End Property
 
-    Private Function GetMajorVsVersion() As Integer
+    Protected ReadOnly Property IsVisualStudio2015() As Boolean
+        Get
+            Return GetVsMajorVersion() = 14
+        End Get
+    End Property
+
+    Private Function GetYearFromVsMajorVersion(version As Integer) As Integer
+        Select Case version
+            Case 9
+                Return 2008
+            Case 10
+                Return 2010
+            Case 11
+                Return 2012
+            Case 12
+                Return 2013
+            Case 14
+                Return 2015
+            Case Else
+                Return version
+        End Select
+    End Function
+
+    Private Function GetVsMajorVersion() As Integer
         If (MaxVsVersion < 15) Then
             Return MaxVsVersion
         End If
