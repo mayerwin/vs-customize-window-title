@@ -110,7 +110,7 @@ Public NotInheritable Class RenameVSWindowTitle
         If (Me.Settings.EnableDebugMode) Then
             WriteOutput("Debugger context changed. Updating title.")
         End If
-        Me.UpdateWindowTitle(Me, EventArgs.Empty)
+        Me.UpdateWindowTitleAsync(Me, EventArgs.Empty)
     End Sub
     ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     ' Overriden Package Implementation
@@ -134,7 +134,7 @@ Public NotInheritable Class RenameVSWindowTitle
     Private Sub DoInitialize()
         'Every 5 seconds, we check the window titles in case we missed an event.
         Me.ResetTitleTimer = New System.Windows.Forms.Timer() With {.Interval = 5000}
-        AddHandler Me.ResetTitleTimer.Tick, AddressOf Me.UpdateWindowTitle
+        AddHandler Me.ResetTitleTimer.Tick, AddressOf Me.UpdateWindowTitleAsync
         'Dim assemblyFilename As FileInfo
         'If IsVisualStudio2010 Then
         '    assemblyFilename = New FileInfo(Path.Combine(Path.GetDirectoryName(Me.GetType().Assembly.Location), "RenameVSWindowTitle.v10.dll"))
@@ -227,29 +227,35 @@ Public NotInheritable Class RenameVSWindowTitle
         End Try
     End Function
 
-    Private ReadOnly UpdateWindowTitleLock As Object = New Object()
-
-    Private Sub UpdateWindowTitle(state As Object, e As EventArgs)
+    Private Sub UpdateWindowTitleAsync(state As Object, e As EventArgs)
         If (Me.IDEName Is Nothing AndAlso Me.DTE.MainWindow IsNot Nothing) Then
             Me.IDEName = GetIDEName(Me.DTE.MainWindow.Caption)
         End If
         If (Me.IDEName Is Nothing) Then Return
+        Tasks.Task.Factory.StartNew(AddressOf UpdateWindowTitle)
+    End Sub
+
+    Private ReadOnly UpdateWindowTitleLock As Object = New Object()
+
+    Private Sub UpdateWindowTitle()
         If (Not Monitor.TryEnter(UpdateWindowTitleLock)) Then Return
         Try
             Dim currentInstance = Diagnostics.Process.GetCurrentProcess()
-            Dim vsInstances As Diagnostics.Process() = Diagnostics.Process.GetProcessesByName("devenv")
             Dim rewrite = False
             If Me.Settings.AlwaysRewriteTitles Then
                 rewrite = True
-            ElseIf vsInstances.Count >= Me.Settings.MinNumberOfInstances Then
-                'Check if multiple instances of devenv have identical original names. If so, then rewrite the title of current instance (normally the extension will run on each instance so no need to rewrite them as well). Otherwise do not rewrite the title.
-                'The best would be to get the EnvDTE.DTE object of the other instances, and compare the solution or project names directly instead of relying on window titles (which may be hacked by third party software as well).
-                Dim currentInstanceName = Path.GetFileNameWithoutExtension(Me.DTE.Solution.FullName)
-                If String.IsNullOrEmpty(currentInstanceName) Then
-                    rewrite = True
-                ElseIf (From vsInstance In vsInstances Where vsInstance.Id <> currentInstance.Id
-                        Select GetVSSolutionName(vsInstance.MainWindowTitle())).Any(Function(vsInstanceName) vsInstanceName IsNot Nothing AndAlso currentInstanceName = vsInstanceName) Then
-                    rewrite = True
+            Else
+                Dim vsInstances As Diagnostics.Process() = Diagnostics.Process.GetProcessesByName("devenv")
+                If vsInstances.Count >= Me.Settings.MinNumberOfInstances Then
+                    'Check if multiple instances of devenv have identical original names. If so, then rewrite the title of current instance (normally the extension will run on each instance so no need to rewrite them as well). Otherwise do not rewrite the title.
+                    'The best would be to get the EnvDTE.DTE object of the other instances, and compare the solution or project names directly instead of relying on window titles (which may be hacked by third party software as well).
+                    Dim currentInstanceName = Path.GetFileNameWithoutExtension(Me.DTE.Solution.FullName)
+                    If String.IsNullOrEmpty(currentInstanceName) Then
+                        rewrite = True
+                    ElseIf (From vsInstance In vsInstances Where vsInstance.Id <> currentInstance.Id
+                            Select GetVSSolutionName(vsInstance.MainWindowTitle())).Any(Function(vsInstanceName) vsInstanceName IsNot Nothing AndAlso currentInstanceName = vsInstanceName) Then
+                        rewrite = True
+                    End If
                 End If
             End If
             Dim pattern As String
@@ -275,7 +281,10 @@ Public NotInheritable Class RenameVSWindowTitle
             End If
             Me.ChangeWindowTitle(GetNewTitle(pattern:=pattern))
         Catch ex As Exception
-            If (Me.Settings.EnableDebugMode) Then WriteOutput("UpdateWindowTitle exception: " + ex.ToString())
+            Try
+                If (Me.Settings.EnableDebugMode) Then WriteOutput("UpdateWindowTitle exception: " + ex.ToString())
+            Catch
+            End Try
         Finally
             Monitor.Exit(UpdateWindowTitleLock)
         End Try
