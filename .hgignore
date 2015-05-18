@@ -36,3 +36,6 @@ _ReSharper*/
 *.[Pp]ublish.xml
 *.resharper
 var/
+RenameVSWindowTitle.old
+*.sln.ide
+Reviews
