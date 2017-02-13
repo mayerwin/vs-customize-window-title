@@ -133,6 +133,7 @@
       <DependentUpon>EditablePatternControl.cs</DependentUpon>
     </Compile>
     <Compile Include="FilePickerEditor.cs" />
+    <Compile Include="Lib\Elevated.cs" />
     <Compile Include="SettingsOverridesPageGrid.cs">
       <SubType>Component</SubType>
     </Compile>

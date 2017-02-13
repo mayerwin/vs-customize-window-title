@@ -349,6 +349,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
                 ClosestParentDepth = settings.ClosestParentDepth,
                 FarthestParentDepth = settings.FarthestParentDepth,
                 AppendedString = settings.AppendedString,
+                ElevatedString = settings.ElevatedString,
                 PatternIfBreakMode = settings.PatternIfBreakMode,
                 PatternIfDesignMode = settings.PatternIfDesignMode,
                 PatternIfRunningMode = settings.PatternIfRunningMode,
@@ -382,6 +383,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
         public const string DefaultPatternIfDocumentButNoSolutionOpen = "[documentName] - [ideName]";
         public const string DefaultPatternIfNothingOpen = "[ideName]";
         public const string DefaultAppendedString = "*";
+        public const string DefaultElevatedString = "(elevated)";
         public const int DefaultClosestParentDepth = 1;
         public const int DefaultFarthestParentDepth = 1;
 
@@ -433,6 +435,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
             "parent:X",
             "parent:X:Y",
             "ideName",
+            "elevated",
             "vsMajorVersion",
             "vsMajorVersionYear",
             "platformName",
@@ -529,6 +532,8 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
                                 return Globals.VsProcessId.Value.ToString(CultureInfo.InvariantCulture);
                             case "ideName":
                                 return this.IDEName ?? string.Empty;
+                            case "elevated":
+                                return Elevated.IsElevated() ? (" " + cfg?.ElevatedString ?? this.GlobalSettings.ElevatedString) : string.Empty;
                             case "path":
                                 return string.IsNullOrEmpty(path) ? windowName : path;
                             case "parentPath":

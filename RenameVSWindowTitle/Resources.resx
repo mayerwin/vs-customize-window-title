@@ -154,6 +154,9 @@
   <data name="tag_documentProjectName" xml:space="preserve">
     <value>Active document project name (if the document is part of a loaded project)</value>
   </data>
+  <data name="tag_elevated" xml:space="preserve">
+    <value>Value of elevated string, if running elevated.</value>
+  </data>
   <data name="tag_envX" xml:space="preserve">
     <value>Environment variable X for current Visual Studio process.</value>
   </data>

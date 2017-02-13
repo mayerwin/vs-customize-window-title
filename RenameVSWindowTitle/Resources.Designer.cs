@@ -229,6 +229,15 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Value of elevated string, if running elevated..
+        /// </summary>
+        internal static string tag_elevated {
+            get {
+                return ResourceManager.GetString("tag_elevated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Environment variable X for current Visual Studio process..
         /// </summary>
         internal static string tag_envX {

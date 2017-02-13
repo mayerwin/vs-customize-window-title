@@ -73,6 +73,12 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
         [DefaultValue(RenameVSWindowTitle.DefaultAppendedString)]
         public string AppendedString { get; set; } = RenameVSWindowTitle.DefaultAppendedString;
 
+        [Category("Patterns")]
+        [DisplayName("Elevated string")]
+        [Description("Default: '(elevated)'. String to render when [elevated] renders.")]
+        [DefaultValue(RenameVSWindowTitle.DefaultAppendedString)]
+        public string ElevatedString { get; set; } = RenameVSWindowTitle.DefaultElevatedString;
+
         [Category("Source control")]
         [DisplayName("Git binaries directory")]
         [Description("Default: Empty. Search windows PATH for git if empty.")]
