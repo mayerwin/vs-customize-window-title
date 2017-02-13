@@ -130,6 +130,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
                     addAttr(doc, s, Globals.ClosestParentDepthTag, settings.ClosestParentDepth?.ToString(), settings.ClosestParentDepth == RenameVSWindowTitle.DefaultClosestParentDepth);
                     addAttr(doc, s, Globals.FarthestParentDepthTag, settings.FarthestParentDepth?.ToString(), settings.FarthestParentDepth == RenameVSWindowTitle.DefaultFarthestParentDepth);
                     addAttr(doc, s, Globals.AppendedStringTag, settings.AppendedString, settings.AppendedString == RenameVSWindowTitle.DefaultAppendedString);
+                    addAttr(doc, s, Globals.ElevatedStringTag, settings.ElevatedString, settings.ElevatedString == RenameVSWindowTitle.DefaultElevatedString);
                     addAttr(doc, s, Globals.PatternIfRunningModeTag, settings.PatternIfRunningMode, settings.PatternIfRunningMode == RenameVSWindowTitle.DefaultPatternIfRunningMode);
                     addAttr(doc, s, Globals.PatternIfBreakModeTag, settings.PatternIfBreakMode, settings.PatternIfBreakMode == RenameVSWindowTitle.DefaultPatternIfBreakMode);
                     addAttr(doc, s, Globals.PatternIfDesignModeTag, settings.PatternIfDesignMode, settings.PatternIfDesignMode == RenameVSWindowTitle.DefaultPatternIfDesignMode);

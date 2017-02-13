@@ -18,6 +18,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle
         public int? ClosestParentDepth;
         public int? FarthestParentDepth;
         public string AppendedString;
+        public string ElevatedString;
 
         // solution name (file name part or override value)
         public string SolutionName;
@@ -39,6 +40,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle
             merge(ref ClosestParentDepth, s.ClosestParentDepth);
             merge(ref FarthestParentDepth, s.FarthestParentDepth);
             merge(ref AppendedString, s.AppendedString);
+            merge(ref ElevatedString, s.ElevatedString);
             merge(ref PatternIfRunningMode, s.PatternIfRunningMode);
             merge(ref PatternIfBreakMode, s.PatternIfBreakMode);
             merge(ref PatternIfDesignMode, s.PatternIfDesignMode);

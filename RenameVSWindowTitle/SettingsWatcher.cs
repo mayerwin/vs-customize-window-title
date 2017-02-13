@@ -170,6 +170,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
                 TryUpdateSetting(ref settingsSet.ClosestParentDepth, node, Globals.ClosestParentDepthTag);
                 TryUpdateSetting(ref settingsSet.FarthestParentDepth, node, Globals.FarthestParentDepthTag);
                 TryUpdateSetting(ref settingsSet.AppendedString, node, Globals.AppendedStringTag);
+                TryUpdateSetting(ref settingsSet.ElevatedString, node, Globals.ElevatedStringTag);
                 TryUpdateSetting(ref settingsSet.PatternIfRunningMode, node, Globals.PatternIfRunningModeTag);
                 TryUpdateSetting(ref settingsSet.PatternIfBreakMode, node, Globals.PatternIfBreakModeTag);
                 TryUpdateSetting(ref settingsSet.PatternIfDesignMode, node, Globals.PatternIfDesignModeTag);

@@ -18,6 +18,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
         public const string ClosestParentDepthTag = "ClosestParentDepth";
         public const string FarthestParentDepthTag = "FarthestParentDepth";
         public const string AppendedStringTag = "AppendedString";
+        public const string ElevatedStringTag = "ElevatedString";
         public const string PatternIfRunningModeTag = "PatternIfRunningMode";
         public const string PatternIfBreakModeTag = "PatternIfBreakMode";
         public const string PatternIfDesignModeTag = "PatternIfDesignMode";
