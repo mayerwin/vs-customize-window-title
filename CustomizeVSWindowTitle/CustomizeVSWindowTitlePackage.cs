@@ -43,7 +43,13 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
     [Guid(GuidList.guidCustomizeVSWindowTitlePkgString)]
     public sealed class CustomizeVSWindowTitle : AsyncPackage {
         public CustomizeVSWindowTitle() {
-            AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
+
+            var productMajorPart = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileVersionInfo.ProductMajorPart;
+            if (productMajorPart != 14)
+            {
+                AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
+            }
+            
             this.TagResolvers = new List<ITagResolver> {
                 new DocumentNameResolver(),
                 new ProjectNameResolver(),
