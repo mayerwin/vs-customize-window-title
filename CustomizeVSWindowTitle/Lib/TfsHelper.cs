@@ -52,11 +52,13 @@ namespace ErwinMayerLabs.RenameVSWindowTitle.Lib {
         }
 
         public static TfsTeamProjectCollection CreateTfsCollection(string tfsName) {
+            throw new NotImplementedException();
+
             //Works for VS 2017+, with assemblies from VS 15. Does not work with VS 2015 (will cause an exception saying the assembly could not be found).
-            Uri fullyQualifiedUriForName = TfsTeamProjectCollection.GetFullyQualifiedUriForName(tfsName);
-            var vssCredentials = Microsoft.VisualStudio.Services.Client.VssClientCredentials.LoadCachedCredentials(fullyQualifiedUriForName, false, Microsoft.VisualStudio.Services.Common.CredentialPromptType.DoNotPrompt);
-            var tfsTeamProjectCollection = new TfsTeamProjectCollection(fullyQualifiedUriForName, vssCredentials);
-            return tfsTeamProjectCollection;
+            // Uri fullyQualifiedUriForName = TfsTeamProjectCollection.GetFullyQualifiedUriForName(tfsName);
+            // var vssCredentials = Microsoft.VisualStudio.Services.Client.VssClientCredentials.LoadCachedCredentials(fullyQualifiedUriForName, false, Microsoft.VisualStudio.Services.Common.CredentialPromptType.DoNotPrompt);
+            // var tfsTeamProjectCollection = new TfsTeamProjectCollection(fullyQualifiedUriForName, vssCredentials);
+            // return tfsTeamProjectCollection;
 
             //Works for VS 2015, with assemblies from VS 14, but to be compatible with VS 2017+, we'd need to:
             //1. Add the following in AssemblyInfo.cs to redirect the assembly with newer versions:
