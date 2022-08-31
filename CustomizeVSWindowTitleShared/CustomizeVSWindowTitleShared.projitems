@@ -32,6 +32,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Resolvers\AnythingUnsavedResolver.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Resolvers\ConfigurationResolver.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Resolvers\DebuggedProcessesArgsResolver.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resolvers\DebuggedProcessesExesResolver.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Resolvers\DocumentResolver.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Resolvers\ElevationSuffixResolver.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Resolvers\GitResolver.cs" />

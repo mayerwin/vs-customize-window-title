@@ -136,6 +136,9 @@
   <data name="tag_debuggedProcessesArgs" xml:space="preserve">
     <value>Arguments of the processes currently debugged (including the executable file name before each set of arguments if more than 1 process).</value>
   </data>
+  <data name="tag_debuggedProcessesExes" xml:space="preserve">
+    <value>Names and arguments of the processes currently being debugged</value>
+  </data>
   <data name="tag_documentName" xml:space="preserve">
     <value>Active document or, if no active document, window name.</value>
   </data>
