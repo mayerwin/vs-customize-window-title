@@ -1,4 +1,4 @@
-# Customize Visual Studio Window Title - VS Extension
+# Customize Visual Studio Window Title - Visual Studio Extension
 ![Screenshot](/CustomizeVSWindowTitleSharedFolder/Screenshot.png?raw=true "Screenshot")
 
 This is the official repository for:  
