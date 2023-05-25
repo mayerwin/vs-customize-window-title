@@ -1,4 +1,4 @@
-# Customize Visual Studio Window Title - VS Extension
+# Customize Visual Studio Window Title - Visual Studio Extension
 ![Screenshot](/CustomizeVSWindowTitleSharedFolder/Screenshot.png?raw=true "Screenshot")
 
 This is the official repository for:  
@@ -25,8 +25,8 @@ Visual Studio 2015, 2017, 2019, 2022+.
 
 Visual Studio 2019 support has been temporarily dropped due to limitations imposed by Microsoft's Visual Studio Marketplace. The last stable release (5.1.0) supporting Visual Studio 2019 can however be downloaded [here](https://github.com/mayerwin/vs-customize-window-title/releases/tag/5.1.0).
 
-Visual Studio 2010 support has been dropped due to limitations imposed by Microsoft's VSIX format to support Visual Studio 2017. The last stable release supporting Visual Studio 2010 can however be downloaded [here](https://github.com/mayerwin/vs-customize-window-title/releases/tag/3.3.6).
-
 Visual Studio 2012 and 2013 support has been dropped due to new requirements imposed by Microsoft to speed up loading time with AsyncPackage. The last stable release supporting Visual Studio 2012 and 2013 can however be downloaded [here](https://github.com/mayerwin/vs-customize-window-title/releases/tag/3.8.1).
+
+Visual Studio 2010 support has been dropped due to limitations imposed by Microsoft's VSIX format to support Visual Studio 2017. The last stable release supporting Visual Studio 2010 can however be downloaded [here](https://github.com/mayerwin/vs-customize-window-title/releases/tag/3.3.6).
 
 You are welcome to contribute to this project!
