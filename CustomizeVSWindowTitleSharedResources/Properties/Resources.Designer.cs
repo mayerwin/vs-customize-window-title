@@ -166,6 +166,15 @@ namespace ErwinMayerLabs.CustomizeVSWindowTitleSharedResources.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Currently debugged processes names and arguments..
+        /// </summary>
+        public static string tag_debuggedProcesses {
+            get {
+                return ResourceManager.GetString("tag_debuggedProcesses", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Arguments of the processes currently debugged (including the executable file name before each set of arguments if more than 1 process)..
         /// </summary>
         public static string tag_debuggedProcessesArgs {

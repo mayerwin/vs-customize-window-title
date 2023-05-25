@@ -7,7 +7,13 @@ using EnvDTE80;
 
 namespace ErwinMayerLabs.RenameVSWindowTitle.Resolvers {
     public class DebuggedProcessesArgsResolver : SimpleTagResolver {
-        public DebuggedProcessesArgsResolver() : base(tagName: "debuggedProcessesArgs") { }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="tagName">"debuggedProcesses", to always show the process name and arguments, and "debuggedProcessesArgs", to show the process name only if there are more than one process, are supported.</param>
+        public DebuggedProcessesArgsResolver(string tagName = "debuggedProcesses") : base(tagName: tagName) {
+            if (tagName != "debuggedProcesses" && tagName != "debuggedProcessesArgs") throw new ArgumentOutOfRangeException(nameof(tagName));
+        }
 
         public override string Resolve(AvailableInfo info) {
             var list = new List<Tuple<string, string>>();
@@ -18,7 +24,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle.Resolvers {
                 }
             }
             if (!list.Any()) return "";
-            if (list.Count == 1) {
+            if (this.TagName == "debuggedProcessesArgs" && list.Count == 1) {
                 return list.Single().Item2;
             }
             return string.Join(" & ", list.Select(e => Path.GetFileName(e.Item1) + " " + e.Item2));

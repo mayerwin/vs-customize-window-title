@@ -133,6 +133,9 @@
   <data name="tag_configurationName" xml:space="preserve">
     <value>Current configuration name (e.g. Release).</value>
   </data>
+	<data name="tag_debuggedProcesses" xml:space="preserve">
+    <value>Currently debugged processes names and arguments.</value>
+  </data>
   <data name="tag_debuggedProcessesArgs" xml:space="preserve">
     <value>Arguments of the processes currently debugged (including the executable file name before each set of arguments if more than 1 process).</value>
   </data>
