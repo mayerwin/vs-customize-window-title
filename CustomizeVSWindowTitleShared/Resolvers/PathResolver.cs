@@ -100,7 +100,9 @@ namespace ErwinMayerLabs.RenameVSWindowTitle.Resolvers {
             s = null;
             var m = EnvRegex.Match(tag);
             if (m.Success) {
-                s = Environment.GetEnvironmentVariable(m.Groups[1].Value);
+                var name = m.Groups[1].Value;
+                if (name.ToLowerInvariant() == "machinename") name = "COMPUTERNAME";
+                s = Environment.GetEnvironmentVariable(name);
                 return true;
             }
             return false;
