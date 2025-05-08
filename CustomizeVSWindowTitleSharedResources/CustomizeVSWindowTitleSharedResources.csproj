@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net46</TargetFramework>
+    <TargetFramework>net481</TargetFramework>
     <RootNamespace>ErwinMayerLabs.CustomizeVSWindowTitleSharedResources</RootNamespace>
     <SignAssembly>True</SignAssembly>
-    <AssemblyOriginatorKeyFile>C:\Users\erwin\Dropbox\Projects\GitHub\vs-customize-window-title\CustomizeVSWindowTitleSharedFolder\Key.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>..\CustomizeVSWindowTitleSharedFolder\Key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>
