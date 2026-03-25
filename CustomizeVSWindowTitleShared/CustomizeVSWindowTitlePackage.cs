@@ -408,9 +408,6 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
 
                 var pattern = this.GetPattern(solutionFp, useDefaultPattern, settings);
                 var newTitle = this.GetNewTitle(solution, pattern, settings);
-                if (this.IsBuilding && !string.IsNullOrEmpty(this.UiSettings.BuildingSuffix)) {
-                    newTitle = newTitle + this.UiSettings.BuildingSuffix;
-                }
                 this.ChangeWindowTitle(newTitle);
                 if (this.UiSettings.RewriteCompactTitle) this.ChangeXamlTitle(!string.IsNullOrWhiteSpace(this.IDEName) ? newTitle.Replace(" - " + this.IDEName, "") : newTitle);
             }
@@ -557,6 +554,9 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
                     return "";
                 }
             });
+            if (this.IsBuilding && !string.IsNullOrEmpty(this.UiSettings.BuildingSuffix)) {
+                pattern = pattern + this.UiSettings.BuildingSuffix;
+            }
             var appendedString = cfg?.AppendedString ?? this.UiSettings.AppendedString;
             return pattern + " " + appendedString;
         }
