@@ -464,6 +464,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
                 PatternIfBreakMode = this.UiSettings.PatternIfBreakMode,
                 PatternIfDesignMode = this.UiSettings.PatternIfDesignMode,
                 PatternIfRunningMode = this.UiSettings.PatternIfRunningMode,
+                BuildingSuffix = this.UiSettings.BuildingSuffix,
             };
 
             if (!string.IsNullOrEmpty(solutionFp)) {
@@ -554,8 +555,9 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
                     return "";
                 }
             });
-            if (this.IsBuilding && !string.IsNullOrEmpty(this.UiSettings.BuildingSuffix)) {
-                pattern = pattern + this.UiSettings.BuildingSuffix;
+            var buildingSuffix = cfg?.BuildingSuffix ?? this.UiSettings.BuildingSuffix;
+            if (this.IsBuilding && !string.IsNullOrEmpty(buildingSuffix)) {
+                pattern = pattern + buildingSuffix;
             }
             var appendedString = cfg?.AppendedString ?? this.UiSettings.AppendedString;
             return pattern + " " + appendedString;
