@@ -7,7 +7,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle.Resolvers {
     public class PathResolver : TagResolver, ISimpleTagResolver {
         private const string tagName = "path";
 
-        public PathResolver() : base(tagNames: new[] { tagName, tagName + ":X", tagName + ":X:Y" }) { }
+        public PathResolver() : base(tagNames: new[] { tagName, tagName + ":X", tagName + ":X:Y", tagName + ":DriveLabel" }) { }
 
         public string TagName { get; } = tagName;
 
@@ -18,6 +18,22 @@ namespace ErwinMayerLabs.RenameVSWindowTitle.Resolvers {
         public override bool TryResolve(string tag, AvailableInfo info, out string s) {
             s = null;
             if (!tag.StartsWith(tagName, StringComparison.InvariantCulture)) return false;
+            var suffix = tag.Substring(tagName.Length);
+            if (string.Equals(suffix, ":DriveLabel", StringComparison.OrdinalIgnoreCase)) {
+                s = string.Empty;
+                if (info.PathParts.Any()) {
+                    try {
+                        var driveInfo = new System.IO.DriveInfo(info.PathParts[0]);
+                        if (driveInfo.IsReady) {
+                            s = driveInfo.VolumeLabel;
+                        }
+                    }
+                    catch {
+                        // Drive not available
+                    }
+                }
+                return true;
+            }
             var m = Globals.RangeRegex.Match(tag.Substring(tagName.Length));
             if (m.Success) {
                 if (!info.PathParts.Any()) {

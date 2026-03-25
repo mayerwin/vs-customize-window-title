@@ -81,6 +81,12 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
         public string PatternIfRunningMode { get; set; } = "[parentPath]\\[solutionName] (Running) - [ideName]";
 
         [Category("Patterns")]
+        [DisplayName("Building suffix")]
+        [Description("Default: ' (Building)'. String appended to the title while a build is in progress. Leave empty to disable.")]
+        [DefaultValue(" (Building)")]
+        public string BuildingSuffix { get; set; } = " (Building)";
+
+        [Category("Patterns")]
         [DisplayName("Appended string")]
         [Description("Default: '\t' (tab). String to be added at the end of the title to identify that it has been rewritten. If not default or '*', and \"Always rewrite titles\" is false, the detection of concurrent instances with the same title may not work.")]
         [DefaultValue(CustomizeVSWindowTitle.DefaultAppendedString)]

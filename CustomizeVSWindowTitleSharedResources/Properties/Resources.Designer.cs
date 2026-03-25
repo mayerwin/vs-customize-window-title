@@ -373,6 +373,15 @@ namespace ErwinMayerLabs.CustomizeVSWindowTitleSharedResources.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Volume label of the drive containing the current solution/document path.
+        /// </summary>
+        public static string tag_pathDriveLabel {
+            get {
+                return ResourceManager.GetString("tag_pathDriveLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Current platform name (e.g. x86)..
         /// </summary>
         public static string tag_platformName {

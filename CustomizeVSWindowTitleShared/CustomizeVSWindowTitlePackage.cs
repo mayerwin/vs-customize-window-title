@@ -136,6 +136,8 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
             Globals.DTE.Events.WindowEvents.WindowActivated += this.OnIdeEvent;
             Globals.DTE.Events.DocumentEvents.DocumentOpened += this.OnIdeEvent;
             Globals.DTE.Events.DocumentEvents.DocumentClosing += this.OnIdeEvent;
+            Globals.DTE.Events.BuildEvents.OnBuildBegin += (scope, action) => { this.IsBuilding = true; this.OnIdeEvent(); };
+            Globals.DTE.Events.BuildEvents.OnBuildDone += (scope, action) => { this.IsBuilding = false; this.OnIdeEvent(); };
 
             this.GlobalSettingsWatcher.SettingsCleared = this.OnSettingsCleared;
             this.SolutionSettingsWatcher.SettingsCleared = this.OnSettingsCleared;
@@ -156,6 +158,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
 
         public string IDEName { get; private set; }
         public string ElevationSuffix { get; private set; }
+        internal bool IsBuilding { get; private set; }
 
         public static CustomizeVSWindowTitle CurrentPackage;
 
@@ -405,6 +408,9 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
 
                 var pattern = this.GetPattern(solutionFp, useDefaultPattern, settings);
                 var newTitle = this.GetNewTitle(solution, pattern, settings);
+                if (this.IsBuilding && !string.IsNullOrEmpty(this.UiSettings.BuildingSuffix)) {
+                    newTitle = newTitle + this.UiSettings.BuildingSuffix;
+                }
                 this.ChangeWindowTitle(newTitle);
                 if (this.UiSettings.RewriteCompactTitle) this.ChangeXamlTitle(!string.IsNullOrWhiteSpace(this.IDEName) ? newTitle.Replace(" - " + this.IDEName, "") : newTitle);
             }

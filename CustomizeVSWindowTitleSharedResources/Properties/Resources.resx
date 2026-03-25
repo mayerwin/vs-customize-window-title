@@ -202,6 +202,9 @@
   <data name="tag_pathXY" xml:space="preserve">
     <value>Path segment over the specified range (e.g. for C:\F1\MySolutionFolder\MySolution.sln, [path:0:2] = C:\F1\MySolutionFolder, [path:2:0] = MySolutionFolder\F1\C:)</value>
   </data>
+  <data name="tag_pathDriveLabel" xml:space="preserve">
+    <value>Volume label of the drive containing the current solution/document path (e.g. for a drive labeled 'MyProject', [path:DriveLabel] = MyProject).</value>
+  </data>
   <data name="tag_platformName" xml:space="preserve">
     <value>Current platform name (e.g. x86).</value>
   </data>
