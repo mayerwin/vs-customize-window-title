@@ -26,6 +26,8 @@ namespace ErwinMayerLabs.RenameVSWindowTitle
         public string PatternIfBreakMode;
         public string PatternIfDesignMode;
 
+        public string GitWorkingDirectory;
+
         // if s is not null, override d
         private void merge<T>(ref T d, T s)
         {
@@ -42,6 +44,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle
             merge(ref PatternIfRunningMode, s.PatternIfRunningMode);
             merge(ref PatternIfBreakMode, s.PatternIfBreakMode);
             merge(ref PatternIfDesignMode, s.PatternIfDesignMode);
+            merge(ref GitWorkingDirectory, s.GitWorkingDirectory);
         }
     }
 }

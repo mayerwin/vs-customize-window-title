@@ -36,8 +36,10 @@ namespace ErwinMayerLabs.RenameVSWindowTitle.Resolvers {
                     return 2019;
                 case 17:
                     return 2022;
+                case 18:
+                    return 2026;
                 default:
-                    return version;
+                    return version + 2008;
             }
         }
     }

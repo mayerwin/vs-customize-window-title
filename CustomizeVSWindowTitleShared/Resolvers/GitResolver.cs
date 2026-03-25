@@ -8,14 +8,15 @@ namespace ErwinMayerLabs.RenameVSWindowTitle.Resolvers {
 
         public override string Resolve(AvailableInfo info) {
             GitInfo.UpdateGitExecFp(info.GlobalSettings.GitDirectory); // there is likely a better way to adjust the git path
-            return GetGitBranchNameOrEmpty(info.Solution);
+            return GetGitBranchNameOrEmpty(info, info.Solution);
         }
 
-        public static string GetGitBranchNameOrEmpty(Solution solution) {
+        public static string GetGitBranchNameOrEmpty(AvailableInfo info, Solution solution) {
             var sn = solution?.FullName;
             if (string.IsNullOrEmpty(sn)) return string.Empty;
-            var workingDirectory = new FileInfo(sn).DirectoryName;
-            return GitInfo.IsGitRepository(workingDirectory) ? GetGitBranch(workingDirectory) ?? string.Empty : string.Empty;
+            var workingDirectory = GitInfo.ResolveGitWorkingDirectory(new FileInfo(sn).DirectoryName, info.Cfg?.GitWorkingDirectory);
+            if (workingDirectory == null) return string.Empty;
+            return GetGitBranch(workingDirectory) ?? string.Empty;
         }
 
         public static string GetGitBranch(string workingDirectory) {
@@ -44,14 +45,15 @@ namespace ErwinMayerLabs.RenameVSWindowTitle.Resolvers {
 
         public override string Resolve(AvailableInfo info) {
             GitInfo.UpdateGitExecFp(info.GlobalSettings.GitDirectory); // there is likely a better way to adjust the git path
-            return GetGitRepoNameOrEmpty(info.Solution);
+            return GetGitRepoNameOrEmpty(info, info.Solution);
         }
 
-        public static string GetGitRepoNameOrEmpty(Solution solution) {
+        public static string GetGitRepoNameOrEmpty(AvailableInfo info, Solution solution) {
             var sn = solution?.FullName;
             if (string.IsNullOrEmpty(sn)) return string.Empty;
-            var workingDirectory = new FileInfo(sn).DirectoryName;
-            return GitInfo.IsGitRepository(workingDirectory) ? GetGitRepoName(workingDirectory) ?? string.Empty : string.Empty;
+            var workingDirectory = GitInfo.ResolveGitWorkingDirectory(new FileInfo(sn).DirectoryName, info.Cfg?.GitWorkingDirectory);
+            if (workingDirectory == null) return string.Empty;
+            return GetGitRepoName(workingDirectory) ?? string.Empty;
         }
 
         public static string GetGitRepoName(string workingDirectory) {
@@ -89,6 +91,20 @@ namespace ErwinMayerLabs.RenameVSWindowTitle.Resolvers {
 
         public static string GetGitExecFp() {
             return GitExecFp;
+        }
+
+        /// <summary>
+        /// Resolves the git working directory by trying (in order):
+        /// 1. The solution directory itself.
+        /// 2. The user-configured GitWorkingDirectory override from XML config (if set).
+        /// Returns null if no git repository is found.
+        /// </summary>
+        public static string ResolveGitWorkingDirectory(string solutionDir, string gitWorkingDirectorySetting) {
+            if (IsGitRepository(solutionDir)) return solutionDir;
+            if (!string.IsNullOrEmpty(gitWorkingDirectorySetting) && IsGitRepository(gitWorkingDirectorySetting)) {
+                return gitWorkingDirectorySetting;
+            }
+            return null;
         }
 
         public static bool IsGitRepository(string workingDirectory) {

@@ -108,6 +108,20 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
             }
         }
 
+        /// <summary>
+        /// Opens a settings configuration file for editing, creating it with default template if it doesn't exist.
+        /// </summary>
+        /// <param name="path">The file path to the settings configuration file to open.</param>
+        /// <param name="bGlobal">If true, indicates this is a global settings file and includes sample path attributes; if false, indicates a solution-specific settings file.</param>
+        /// <remarks>
+        /// When the file doesn't exist, this method creates a new XML document with:
+        /// - A root "CustomizeVSWindowTitle" element containing configuration settings
+        /// - A SettingsSet element with current solution settings (if available)
+        /// - A SettingsSet-Example element showing sample configuration format
+        /// 
+        /// After creation, the file is opened in the IDE for editing. If newly created, the file is deleted
+        /// after opening to preserve the "unsaved" state in the editor.
+        /// </remarks>
         private void OpenText(string path, bool bGlobal) {
             var settings = CustomizeVSWindowTitle.CurrentPackage?.GetSettings(this._SolutionFp);
             if (settings == null) return;
@@ -118,6 +132,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
                 doc.AppendChild(doc.CreateXmlDeclaration("1.0", "utf-8", string.Empty));
                 var rootNode = doc.CreateElement("CustomizeVSWindowTitle");
                 doc.AppendChild(rootNode);
+                rootNode.AppendChild(doc.CreateComment(" The following SettingsSet was created based on the current configuration. All overrides are specified as attributes. Attributes equal to the default values have their name preceded by __ for informational purposes, and will be ignored unless the __ prefix is removed. "));
                 XmlElement s;
                 if (!string.IsNullOrEmpty(this._SolutionFp)) {
                     var sn = string.IsNullOrEmpty(settings.SolutionFilePath) ? string.Empty : Path.GetFileNameWithoutExtension(settings.SolutionFilePath);
@@ -133,25 +148,12 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
                     addAttr(doc, s, Globals.PatternIfRunningModeTag, settings.PatternIfRunningMode, settings.PatternIfRunningMode == CustomizeVSWindowTitle.DefaultPatternIfRunningMode);
                     addAttr(doc, s, Globals.PatternIfBreakModeTag, settings.PatternIfBreakMode, settings.PatternIfBreakMode == CustomizeVSWindowTitle.DefaultPatternIfBreakMode);
                     addAttr(doc, s, Globals.PatternIfDesignModeTag, settings.PatternIfDesignMode, settings.PatternIfDesignMode == CustomizeVSWindowTitle.DefaultPatternIfDesignMode);
+                    addAttr(doc, s, Globals.GitWorkingDirectoryTag, settings.GitWorkingDirectory, string.IsNullOrEmpty(settings.GitWorkingDirectory));
                     rootNode.AppendChild(s);
                 }
-                //rootNode.AppendChild(doc.CreateComment("See following sample SettingsSet (remove -Example-Children from the tag name to use as is). All overrides are specified as attributes."));
-                //s = doc.CreateElement("SettingsSet-Example-Children");
-                //s.AppendChild(doc.CreateComment("Element-Style SettingsSet example (all overrides are specified as child elements)."));
-                //if (bGlobal) {
-                //    s.AppendChild(doc.CreateComment("Multiple Path child elements are allowed."));
-                //}
-                //if (bGlobal) addVal(doc, s, Globals.PathTag, sampleSln, false);
-                //addVal(doc, s, Globals.SolutionNameTag, cfg.SolutionName, false);
-                //addVal(doc, s, Globals.ClosestParentDepthTag, CustomizeVSWindowTitle.DefaultClosestParentDepth.ToString(), false);
-                //addVal(doc, s, Globals.FarthestParentDepthTag, CustomizeVSWindowTitle.DefaultFarthestParentDepth.ToString(), false);
-                //addVal(doc, s, Globals.AppendedStringTag, CustomizeVSWindowTitle.DefaultAppendedString, false);
-                //addVal(doc, s, Globals.PatternIfRunningModeTag, CustomizeVSWindowTitle.DefaultPatternIfRunningMode, false);
-                //addVal(doc, s, Globals.PatternIfBreakModeTag, CustomizeVSWindowTitle.DefaultPatternIfBreakMode, false);
-                //addVal(doc, s, Globals.PatternIfDesignModeTag, CustomizeVSWindowTitle.DefaultPatternIfDesignMode, false);
-                //rootNode.AppendChild(s);
 
-                rootNode.AppendChild(doc.CreateComment("See following sample SettingsSet (remove -Example from the tag name to use as is). All overrides are specified as attributes."));
+                rootNode.AppendChild(doc.CreateComment(" The following is an example SettingsSet (remove -Example from the element name to use). All overrides are specified as attributes." +
+                    (bGlobal ? " There can be as many SettingsSet elements as needed, with the addition of a Path attribute or child node(s) to specify to which solution path(s) or solution name(s) each SettingsSet is applicable (case-insensitive wildcards are supported). Overrides from a global settings file take precedence over those found in .sln.rn.xml files." : "") + " "));
                 s = doc.CreateElement("SettingsSet-Example");
                 if (bGlobal) {
                     addAttr(doc, s, Globals.PathTag, sampleSln, false);
@@ -163,6 +165,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
                 addAttr(doc, s, Globals.PatternIfRunningModeTag, CustomizeVSWindowTitle.DefaultPatternIfRunningMode, false);
                 addAttr(doc, s, Globals.PatternIfBreakModeTag, CustomizeVSWindowTitle.DefaultPatternIfBreakMode, false);
                 addAttr(doc, s, Globals.PatternIfDesignModeTag, CustomizeVSWindowTitle.DefaultPatternIfDesignMode, false);
+                addAttr(doc, s, Globals.GitWorkingDirectoryTag, "", false);
                 rootNode.AppendChild(s);
 
                 var tmp = Path.GetTempFileName();

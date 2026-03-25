@@ -13,7 +13,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
         [DisplayName("Enable solution-specific overrides")]
         [Description("Default: False. If true, will try to use overrides from any 'MySolution.sln.rn.xml' file present in the same directory as the MySolution.sln file. " +
             "The file should be in xml format containing a single CustomizeVSWindowTitle/SettingsSet element, which attributes can be the following: " +
-            "SolutionName, FarthestParentDepth, ClosestParentDepth, PatternIfDesignMode, PatternIfBreakMode, PatternIfRunningMode, AppendedString.")]
+            "SolutionName, FarthestParentDepth, ClosestParentDepth, PatternIfDesignMode, PatternIfBreakMode, PatternIfRunningMode, AppendedString, GitWorkingDirectory.")]
         [DefaultValue(false)]
         public bool AllowSolutionSettingsOverrides { get; set; } = false;
 

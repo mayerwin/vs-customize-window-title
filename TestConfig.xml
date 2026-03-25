@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CustomizeVSWindowTitle>
+  <SettingsSet
+    Path="C:\*\windowsApplication1.sln"
+    SolutionName="MySolution-Primary"
+    ClosestParentDepth="1"
+    FarthestParentDepth="1"
+    AppendedString="*o"
+    PatternIfRunningMode="[parentPath]\[solutionName] (Running) - [ideName]plppp"
+    PatternIfBreakMode="[parentPath]\[solutionName] (Debugging) - [ideName]plppp"
+    PatternIfDesignMode="[parentPath]\[solutionName] - [ideName]plppp"
+    GitWorkingDirectory="" />
+</CustomizeVSWindowTitle>

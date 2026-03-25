@@ -23,6 +23,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
         public const string PatternIfRunningModeTag = "PatternIfRunningMode";
         public const string PatternIfBreakModeTag = "PatternIfBreakMode";
         public const string PatternIfDesignModeTag = "PatternIfDesignMode";
+        public const string GitWorkingDirectoryTag = "GitWorkingDirectory";
 
         public static readonly Regex IndexRegex = new Regex(@"^:?(?<index>-?[0-9]+)$", RegexOptions.Compiled);
         public static readonly Regex RangeRegex = new Regex(@"^:(?<startIndex>-?[0-9]+):(?<endIndex>-?[0-9]+)$", RegexOptions.Compiled);

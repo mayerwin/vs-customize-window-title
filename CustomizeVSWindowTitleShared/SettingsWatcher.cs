@@ -201,6 +201,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
                     TryUpdateSetting(ref settingsSet.PatternIfRunningMode, node, Globals.PatternIfRunningModeTag);
                     TryUpdateSetting(ref settingsSet.PatternIfBreakMode, node, Globals.PatternIfBreakModeTag);
                     TryUpdateSetting(ref settingsSet.PatternIfDesignMode, node, Globals.PatternIfDesignModeTag);
+                    TryUpdateSetting(ref settingsSet.GitWorkingDirectory, node, Globals.GitWorkingDirectoryTag);
 
                     this.SettingsSets.Add(settingsSet);
                 }
