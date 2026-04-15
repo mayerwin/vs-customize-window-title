@@ -1,3 +1,4 @@
+using ErwinMayerLabs.RenameVSWindowTitle.Resolvers;
 using System;
 using System.IO;
 using System.Reflection;
@@ -135,7 +136,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
                 rootNode.AppendChild(doc.CreateComment(" The following SettingsSet was created based on the current configuration. All overrides are specified as attributes. Attributes equal to the default values have their name preceded by __ for informational purposes, and will be ignored unless the __ prefix is removed. "));
                 XmlElement s;
                 if (!string.IsNullOrEmpty(this._SolutionFp)) {
-                    var sn = string.IsNullOrEmpty(settings.SolutionFilePath) ? string.Empty : Path.GetFileNameWithoutExtension(settings.SolutionFilePath);
+                    var sn = SolutionNameResolver.GetSolutionNameOrEmpty(settings.SolutionFilePath);
 
                     s = doc.CreateElement("SettingsSet");
                     if (bGlobal) {

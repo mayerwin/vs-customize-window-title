@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using EnvDTE;
 using EnvDTE80;
 using ErwinMayerLabs.Lib;
+using ErwinMayerLabs.RenameVSWindowTitle.Resolvers;
 using Microsoft.VisualStudio;
 
 namespace ErwinMayerLabs.RenameVSWindowTitle {
@@ -114,8 +115,8 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
                     if (dte != null) {
                         var s = dte.Solution;
                         if (s != null) {
-                            var sn = Path.GetFileNameWithoutExtension(s.FullName);
-                            if (!string.IsNullOrEmpty(sn) && solution != null && sn == Path.GetFileNameWithoutExtension(solution.FullName)) {
+                            var sn = SolutionNameResolver.GetSolutionNameOrEmpty(s);
+                            if (!string.IsNullOrEmpty(sn) && solution != null && sn == SolutionNameResolver.GetSolutionNameOrEmpty(solution)) {
                                 vs_instance_info.nb_instances_same_solution++;
                             }
                         }

@@ -44,6 +44,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
     [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExists_string, PackageAutoLoadFlags.BackgroundLoad)]
     [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionHasMultipleProjects_string, PackageAutoLoadFlags.BackgroundLoad)]
     [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionHasSingleProject_string, PackageAutoLoadFlags.BackgroundLoad)]
+    [ProvideAutoLoad(VSConstants.UICONTEXT.FolderOpened_string, PackageAutoLoadFlags.BackgroundLoad)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [ProvideOptionPage(typeof(GlobalSettingsPageGrid), "Customize VS Window Title", "Global rules", 0, 0, true)]
     [ProvideOptionPage(typeof(SettingsOverridesPageGrid), "Customize VS Window Title", "Solution-specific overrides", 51, 500, true)]
@@ -386,7 +387,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
                             if (vsInstances.Length >= 2) {
                                 //Check if multiple instances of devenv have identical original names. If so, then rewrite the title of current instance (normally the extension will run on each instance so no need to rewrite them as well). Otherwise do not rewrite the title.
                                 //The best would be to get the EnvDTE.DTE object of the other instances, and compare the solution or project names directly instead of relying on window titles (which may be hacked by third party software as well). But using moniker it will only work if they are launched with the same privilege.
-                                var currentInstanceName = Path.GetFileNameWithoutExtension(Globals.DTE.Solution.FullName);
+                                var currentInstanceName = SolutionNameResolver.GetSolutionNameOrEmpty(Globals.DTE.Solution);
                                 if (string.IsNullOrEmpty(currentInstanceName) || (from vsInstance in vsInstances
                                                                                   where vsInstance.Id != VsProcessIdResolver.VsProcessId.Value
                                                                                   select this.GetVSSolutionName(vsInstance.MainWindowTitle)).Any(vsInstanceName => vsInstanceName != null && currentInstanceName == vsInstanceName)) {
@@ -402,11 +403,11 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
                     }
                 }
                 var solution = Globals.DTE.Solution;
-                var solutionFp = solution?.FullName;
+                var solutionFullName = solution?.FullName;
 
-                var settings = this.GetSettings(solutionFp);
+                var settings = this.GetSettings(solutionFullName: solutionFullName);
 
-                var pattern = this.GetPattern(solutionFp, useDefaultPattern, settings);
+                var pattern = this.GetPattern(solutionFullName, useDefaultPattern, settings);
                 var newTitle = this.GetNewTitle(solution, pattern, settings);
                 this.ChangeWindowTitle(newTitle);
                 if (this.UiSettings.RewriteCompactTitle) this.ChangeXamlTitle(!string.IsNullOrWhiteSpace(this.IDEName) ? newTitle.Replace(" - " + this.IDEName, "") : newTitle);
@@ -447,12 +448,19 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
         }
 
         private SettingsSet CachedSettings;
-        internal SettingsSet GetSettings(string solutionFp) {
+        internal SettingsSet GetSettings(string solutionFullName) {
             this.GlobalSettingsWatcher.Update(this.UiSettingsOverridesOptions.GlobalSolutionSettingsOverridesFp);
-            this.SolutionSettingsWatcher.Update(string.IsNullOrEmpty(solutionFp) ? null : solutionFp + Globals.SolutionSettingsOverrideExtension);
+            string path;
+            if (SolutionNameResolver.IsOpenFolderSolution(solutionFullName)) {
+                path = Path.Combine(solutionFullName, new DirectoryInfo(solutionFullName).Name + Globals.SolutionSettingsOverrideExtension);
+            }
+            else {
+                path = string.IsNullOrEmpty(solutionFullName) ? null : solutionFullName + Globals.SolutionSettingsOverrideExtension;
+            }
+            this.SolutionSettingsWatcher.Update(path);
 
             // config already loaded, use cache
-            if (this.CachedSettings != null && this.CachedSettings.SolutionFilePath == solutionFp) {
+            if (this.CachedSettings != null && this.CachedSettings.SolutionFilePath == solutionFullName) {
                 return this.CachedSettings;
             }
 
@@ -467,10 +475,16 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
                 BuildingSuffix = this.UiSettings.BuildingSuffix,
             };
 
-            if (!string.IsNullOrEmpty(solutionFp)) {
-                settings.SolutionFilePath = solutionFp;
-                settings.SolutionFileName = Path.GetFileName(solutionFp);
-                settings.SolutionName = Path.GetFileNameWithoutExtension(solutionFp);
+            if (!string.IsNullOrEmpty(solutionFullName)) {
+                settings.SolutionFilePath = solutionFullName;
+                if (SolutionNameResolver.IsOpenFolderSolution(solutionFullName)) {
+                    settings.SolutionFileName = new DirectoryInfo(solutionFullName).Name;
+                    settings.SolutionName = settings.SolutionFileName;
+                }
+                else {
+                    settings.SolutionFileName = Path.GetFileName(solutionFullName);
+                    settings.SolutionName = Path.GetFileNameWithoutExtension(solutionFullName);
+                }
 
                 if (!this.UiSettingsOverridesOptions.AllowSolutionSettingsOverrides) {
                     // Do nothing
@@ -496,9 +510,9 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
         public const int DefaultFarthestParentDepth = 1;
         public const int DefaultResetTitleTimerMsPeriod = 5000;
 
-        private string GetPattern(string solutionFp, bool useDefault, SettingsSet settingsOverride) {
+        private string GetPattern(string solutionFullName, bool useDefault, SettingsSet settingsOverride) {
             var settings = this.UiSettings;
-            if (string.IsNullOrEmpty(solutionFp)) {
+            if (string.IsNullOrEmpty(solutionFullName)) {
                 var document = Globals.DTE.ActiveDocument;
                 var window = Globals.DTE.ActiveWindow;
                 if (string.IsNullOrEmpty(document?.FullName) && string.IsNullOrEmpty(window?.Caption)) {

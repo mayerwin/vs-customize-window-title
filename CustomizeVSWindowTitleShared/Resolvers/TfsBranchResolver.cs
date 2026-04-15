@@ -15,12 +15,13 @@ namespace ErwinMayerLabs.RenameVSWindowTitle.Resolvers {
             //if (vce != null && vce.SolutionWorkspace != null) {
             //    return vce.SolutionWorkspace.Name;
             //}  
-            var sn = solution?.FullName;
-            if (string.IsNullOrEmpty(sn)) return string.Empty;
-            var name = string.Empty;
-            //Globals.InvokeOnUIThread(() => name = TfsHelper.GetBranchNameFromLocalFile(Path.GetDirectoryName(sn))); //Causes slowness due to UI thread.
-            name = TfsHelper.GetBranchNameFromLocalFile(Path.GetDirectoryName(sn));
-            return name ?? string.Empty;
+
+            var baseDir = SolutionNameResolver.GetSolutionFolderPathOrEmpty(solution);
+            if (baseDir == string.Empty) {
+                return string.Empty;
+            }
+            //Globals.InvokeOnUIThread(() => name = TfsHelper.GetBranchNameFromLocalFile(baseDir)); //we could try first to use this name value if not empty, but causes slowness due to UI thread.
+            return TfsHelper.GetBranchNameFromLocalFile(baseDir) ?? string.Empty;
         }
     }
 }

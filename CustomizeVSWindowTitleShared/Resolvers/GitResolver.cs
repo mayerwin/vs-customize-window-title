@@ -12,9 +12,11 @@ namespace ErwinMayerLabs.RenameVSWindowTitle.Resolvers {
         }
 
         public static string GetGitBranchNameOrEmpty(AvailableInfo info, Solution solution) {
-            var sn = solution?.FullName;
-            if (string.IsNullOrEmpty(sn)) return string.Empty;
-            var workingDirectory = GitInfo.ResolveGitWorkingDirectory(new FileInfo(sn).DirectoryName, info.Cfg?.GitWorkingDirectory);
+            var baseDir = SolutionNameResolver.GetSolutionFolderPathOrEmpty(solution);
+            if (baseDir == string.Empty) {
+                return string.Empty;
+            }
+            var workingDirectory = GitInfo.ResolveGitWorkingDirectory(baseDir, info.Cfg?.GitWorkingDirectory);
             if (workingDirectory == null) return string.Empty;
             return GetGitBranch(workingDirectory) ?? string.Empty;
         }
@@ -49,9 +51,11 @@ namespace ErwinMayerLabs.RenameVSWindowTitle.Resolvers {
         }
 
         public static string GetGitRepoNameOrEmpty(AvailableInfo info, Solution solution) {
-            var sn = solution?.FullName;
-            if (string.IsNullOrEmpty(sn)) return string.Empty;
-            var workingDirectory = GitInfo.ResolveGitWorkingDirectory(new FileInfo(sn).DirectoryName, info.Cfg?.GitWorkingDirectory);
+            var baseDir = SolutionNameResolver.GetSolutionFolderPathOrEmpty(solution);
+            if (baseDir == string.Empty) {
+                return string.Empty;
+            }
+            var workingDirectory = GitInfo.ResolveGitWorkingDirectory(baseDir, info.Cfg?.GitWorkingDirectory);
             if (workingDirectory == null) return string.Empty;
             return GetGitRepoName(workingDirectory) ?? string.Empty;
         }

@@ -68,10 +68,11 @@ namespace ErwinMayerLabs.RenameVSWindowTitle.Resolvers {
         }
 
         public static string GetSvnDirectoryOrEmpty(Solution solution) {
-            var sn = solution?.FullName;
-            if (string.IsNullOrEmpty(sn)) return string.Empty;
-            var workingDirectory = new FileInfo(sn).DirectoryName;
-            return GetSvnDirectory(workingDirectory) ?? string.Empty;
+            var baseDir = SolutionNameResolver.GetSolutionFolderPathOrEmpty(solution);
+            if (baseDir == string.Empty) {
+                return string.Empty;
+            }
+            return GetSvnDirectory(baseDir) ?? string.Empty;
         }
 
         public static string GetSvnDirectory(string workingDirectory) {

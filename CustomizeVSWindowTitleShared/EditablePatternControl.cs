@@ -96,7 +96,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
         private void updatePreview() {
             this.BackColor = SystemColors.Control;
             var solution = Globals.DTE.Solution;
-            var solutionFp = solution?.FullName;
+            var solutionFullName = solution?.FullName;
 
             Document activeDocument = null;
             try {
@@ -115,7 +115,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
 
             switch (this.PreviewRequires) {
                 case PreviewRequiresAttribute.Requirement.Document:
-                    if (!(solution == null || string.IsNullOrEmpty(solutionFp))) {
+                    if (!(solution == null || string.IsNullOrEmpty(solutionFullName))) {
                         this.lbPreview.Text = "please close solution to enable preview!";
                         return;
                     }
@@ -129,13 +129,13 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
                     }
                     break;
                 case PreviewRequiresAttribute.Requirement.Solution:
-                    if (solution == null || string.IsNullOrEmpty(solutionFp)) {
+                    if (solution == null || string.IsNullOrEmpty(solutionFullName)) {
                         this.lbPreview.Text = "please load any solution to enable preview!";
                         return;
                     }
                     break;
             }
-            var settings = CustomizeVSWindowTitle.CurrentPackage.GetSettings(solutionFp);
+            var settings = CustomizeVSWindowTitle.CurrentPackage.GetSettings(solutionFullName: solutionFullName);
             var pattern = this.txEdit.Text;
             this.lbPreview.Text = "preview: " + CustomizeVSWindowTitle.CurrentPackage.GetNewTitle(solution, pattern, settings);
         }

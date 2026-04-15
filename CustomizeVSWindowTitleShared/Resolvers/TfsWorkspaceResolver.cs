@@ -12,11 +12,13 @@ namespace ErwinMayerLabs.RenameVSWindowTitle.Resolvers {
             //dynamic vce = Globals.DTE.GetObject("Microsoft.VisualStudio.TeamFoundation.VersionControl.VersionControlExt");
             //if (vce != null && vce.SolutionWorkspace != null) {
             //    return vce.SolutionWorkspace.Name;
-            //}  
-            var sn = solution?.FullName;
-            if (string.IsNullOrEmpty(sn)) return string.Empty;
+            //}
+            var baseDir = SolutionNameResolver.GetSolutionFolderPathOrEmpty(solution);
+            if (baseDir == string.Empty) {
+                return string.Empty;
+            }
             var name = string.Empty;
-            Globals.InvokeOnUIThread(() => name = WorkspaceInfoGetter.Instance().GetName(sn));
+            Globals.InvokeOnUIThread(() => name = WorkspaceInfoGetter.Instance().GetName(baseDir));
             return name ?? string.Empty;
         }
     }
@@ -33,10 +35,12 @@ namespace ErwinMayerLabs.RenameVSWindowTitle.Resolvers {
             //if (vce != null && vce.SolutionWorkspace != null) {
             //    return vce.SolutionWorkspace.OwnerName;
             //}  
-            var sn = solution?.FullName;
-            if (string.IsNullOrEmpty(sn)) return string.Empty;
+            var baseDir = SolutionNameResolver.GetSolutionFolderPathOrEmpty(solution);
+            if (baseDir == string.Empty) {
+                return string.Empty;
+            }
             var name = string.Empty;
-            Globals.InvokeOnUIThread(() => name = WorkspaceInfoGetter.Instance().GetOwner(sn));
+            Globals.InvokeOnUIThread(() => name = WorkspaceInfoGetter.Instance().GetOwner(baseDir));
             return name ?? string.Empty;
         }
 

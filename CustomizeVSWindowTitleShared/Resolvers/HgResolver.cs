@@ -12,10 +12,11 @@ namespace ErwinMayerLabs.RenameVSWindowTitle.Resolvers {
         }
 
         public static string GetHgBranchNameOrEmpty(Solution solution) {
-            var sn = solution?.FullName;
-            if (string.IsNullOrEmpty(sn)) return string.Empty;
-            var workingDirectory = new FileInfo(sn).DirectoryName;
-            return IsHgRepository(workingDirectory) ? GetHgBranch(workingDirectory) ?? string.Empty : string.Empty;
+            var baseDir = SolutionNameResolver.GetSolutionFolderPathOrEmpty(solution);
+            if (baseDir == string.Empty) {
+                return string.Empty;
+            }
+            return IsHgRepository(baseDir) ? GetHgBranch(baseDir) ?? string.Empty : string.Empty;
         }
 
         public static string GetHgBranch(string workingDirectory) {

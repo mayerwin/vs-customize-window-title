@@ -42,8 +42,8 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
             catch {
                 // Do nothing
             }
-            var solutionFp = info.Solution?.FullName;
-            if (info.ActiveDocument == null && string.IsNullOrEmpty(solutionFp)) {
+            var solutionFullName = info.Solution?.FullName;
+            if (info.ActiveDocument == null && string.IsNullOrEmpty(solutionFullName)) {
                 if (info.ActiveWindow == null || info.ActiveWindow.Caption == Globals.DTE.MainWindow.Caption) {
                     return null;
                 }
@@ -52,8 +52,8 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
             info.DocumentPath = DocumentHelper.GetActiveDocumentPathOrEmpty(info.ActiveDocument);
             info.WindowName = DocumentHelper.GetActiveWindowNameOrEmpty(info.ActiveWindow);
 
-            if (!string.IsNullOrEmpty(solutionFp)) {
-                info.Path = solutionFp;
+            if (!string.IsNullOrEmpty(solutionFullName)) {
+                info.Path = solutionFullName;
             }
             else {
                 info.Path = info.DocumentPath;
