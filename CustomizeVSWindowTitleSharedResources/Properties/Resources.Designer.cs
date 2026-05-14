@@ -19,7 +19,7 @@ namespace ErwinMayerLabs.CustomizeVSWindowTitleSharedResources.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Resources {
@@ -301,6 +301,15 @@ namespace ErwinMayerLabs.CustomizeVSWindowTitleSharedResources.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Current Mercurial Bookmark name. Make sure Mercurial&apos;s executable directory is added to the Windows PATH variable or specify its location in settings..
+        /// </summary>
+        public static string tag_hgBookmarkName {
+            get {
+                return ResourceManager.GetString("tag_hgBookmarkName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Current Mercurial branch name. Make sure Mercurial&apos;s executable directory is added to the Windows PATH variable or specify its location in settings..
         /// </summary>
         public static string tag_hgBranchName {
@@ -355,6 +364,15 @@ namespace ErwinMayerLabs.CustomizeVSWindowTitleSharedResources.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Volume label of the drive containing the current solution/document path (e.g. for a drive labeled &apos;MyProject&apos;, [path:DriveLabel] = MyProject)..
+        /// </summary>
+        public static string tag_pathDriveLabel {
+            get {
+                return ResourceManager.GetString("tag_pathDriveLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Path element at the specified index (e.g. for C:\F1\MySolutionFolder\MySolution.sln, [path:0] = C:\, [path:1] = C:\F1).
         /// </summary>
         public static string tag_pathX {
@@ -372,15 +390,6 @@ namespace ErwinMayerLabs.CustomizeVSWindowTitleSharedResources.Properties {
             }
         }
         
-        /// <summary>
-        ///   Looks up a localized string similar to Volume label of the drive containing the current solution/document path.
-        /// </summary>
-        public static string tag_pathDriveLabel {
-            get {
-                return ResourceManager.GetString("tag_pathDriveLabel", resourceCulture);
-            }
-        }
-
         /// <summary>
         ///   Looks up a localized string similar to Current platform name (e.g. x86)..
         /// </summary>

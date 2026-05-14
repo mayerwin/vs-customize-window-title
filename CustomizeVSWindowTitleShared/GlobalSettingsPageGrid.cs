@@ -104,7 +104,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
         [DisplayName("Hg binaries directory")]
         [Description("Default: Empty. Search windows PATH for hg if empty.")]
         [Editor(typeof(FilePickerEditor), typeof(System.Drawing.Design.UITypeEditor))]
-        [FilePicker(true, HgBranchNameResolver.HgExecFn, "Hg executable(hg.exe)|hg.exe|All files(*.*)|*.*", 1)]
+        [FilePicker(true, HgHelper.HgExecFn, "Hg executable(hg.exe)|hg.exe|All files(*.*)|*.*", 1)]
         [DefaultValue("")]
         public string HgDirectory { get; set; } = "";
 
