@@ -2,27 +2,21 @@ using System.IO;
 using System.Text;
 using EnvDTE;
 
-namespace ErwinMayerLabs.RenameVSWindowTitle.Resolvers
-{
-    public static class HgHelper
-    {
+namespace ErwinMayerLabs.RenameVSWindowTitle.Resolvers {
+    public static class HgHelper {
         public const string HgExecFn = "hg.exe";
         private static string HgExecFp = HgExecFn;
 
-        public static void UpdateHgExecFp(string hgDp)
-        {
-            if (string.IsNullOrEmpty(hgDp))
-            {
+        public static void UpdateHgExecFp(string hgDp) {
+            if (string.IsNullOrEmpty(hgDp)) {
                 HgExecFp = HgExecFn;
                 return;
             }
             HgExecFp = Path.Combine(hgDp, HgExecFn);
         }
 
-        public static bool IsHgRepository(string workingDirectory)
-        {
-            using (var pProcess = new System.Diagnostics.Process
-            {
+        public static bool IsHgRepository(string workingDirectory) {
+            using (var pProcess = new System.Diagnostics.Process {
                 StartInfo = {
                     FileName = HgExecFp,
                     Arguments = "root",
@@ -33,8 +27,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle.Resolvers
                     CreateNoWindow = true,
                     WorkingDirectory = workingDirectory
                 }
-            })
-            {
+            }) {
                 pProcess.Start();
                 var res = pProcess.StandardOutput.ReadToEnd().TrimEnd('\r', '\n', Path.DirectorySeparatorChar);
                 pProcess.WaitForExit();
@@ -42,20 +35,16 @@ namespace ErwinMayerLabs.RenameVSWindowTitle.Resolvers
             }
         }
 
-        public static string GetHgCommandOrEmpty(Solution solution, string command)
-        {
+        public static string GetHgCommandOrEmpty(Solution solution, string command) {
             var baseDir = SolutionNameResolver.GetSolutionFolderPathOrEmpty(solution);
-            if (baseDir == string.Empty)
-            {
+            if (baseDir == string.Empty) {
                 return string.Empty;
             }
             return IsHgRepository(baseDir) ? GetHgCommand(baseDir, command) ?? string.Empty : string.Empty;
         }
 
-        public static string GetHgCommand(string workingDirectory, string command)
-        {
-            using (var pProcess = new System.Diagnostics.Process
-            {
+        public static string GetHgCommand(string workingDirectory, string command) {
+            using (var pProcess = new System.Diagnostics.Process {
                 StartInfo = {
                     FileName = HgExecFp,
                     Arguments = command,
@@ -65,34 +54,29 @@ namespace ErwinMayerLabs.RenameVSWindowTitle.Resolvers
                     CreateNoWindow = true,
                     WorkingDirectory = workingDirectory
                 }
-            })
-            {
+            }) {
                 pProcess.Start();
-                var branchName = pProcess.StandardOutput.ReadToEnd().TrimEnd(' ', '\r', '\n');
+                var res = pProcess.StandardOutput.ReadToEnd().TrimEnd(' ', '\r', '\n');
                 pProcess.WaitForExit();
-                return branchName;
+                return res;
             }
         }
 
     }
 
-    public class HgBookmarkNameResolver : SimpleTagResolver
-    {
+    public class HgBookmarkNameResolver : SimpleTagResolver {
         public HgBookmarkNameResolver() : base(tagName: "hgBookmarkName") { }
 
-        public override string Resolve(AvailableInfo info)
-        {
+        public override string Resolve(AvailableInfo info) {
             HgHelper.UpdateHgExecFp(info.GlobalSettings.HgDirectory);
             return HgHelper.GetHgCommandOrEmpty(info.Solution, "bookmark -ql .");
         }
     }
-    public class HgBranchNameResolver : SimpleTagResolver
-    {
+    public class HgBranchNameResolver : SimpleTagResolver {
 
         public HgBranchNameResolver() : base(tagName: "hgBranchName") { }
 
-        public override string Resolve(AvailableInfo info)
-        {
+        public override string Resolve(AvailableInfo info) {
             HgHelper.UpdateHgExecFp(info.GlobalSettings.HgDirectory);
             return HgHelper.GetHgCommandOrEmpty(info.Solution, "branch");
         }
