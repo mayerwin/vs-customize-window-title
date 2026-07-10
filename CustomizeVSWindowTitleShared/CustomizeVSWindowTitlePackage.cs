@@ -64,6 +64,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
                 new DocumentUnsavedResolver(),
                 new AnythingUnsavedResolver(),
                 new SolutionNameResolver(),
+                new SolutionFilterNameResolver(),
                 new DocumentPathResolver(),
                 new DocumentParentPathResolver(),
                 new PathResolver(),
@@ -162,6 +163,28 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
         public string ElevationSuffix { get; private set; }
         internal bool IsBuilding { get; private set; }
 
+        // Name (without extension) of the solution filter (.slnf) the current solution was opened from,
+        // or null when no filter is open. Recomputed (on the UI thread) whenever the open solution changes.
+        public string SolutionFilterName { get; private set; }
+        private volatile bool SolutionFilterNameDirty = true;
+
+        private void EnsureSolutionFilterName() {
+            if (!this.SolutionFilterNameDirty) {
+                return;
+            }
+            this.SolutionFilterNameDirty = false;
+            var filterPath = string.Empty;
+            try {
+                Globals.InvokeOnUIThread(() => {
+                    filterPath = SolutionNameResolver.GetOpenSolutionFilterPathOrEmpty();
+                });
+            }
+            catch {
+                filterPath = string.Empty;
+            }
+            this.SolutionFilterName = string.IsNullOrEmpty(filterPath) ? null : Path.GetFileNameWithoutExtension(filterPath);
+        }
+
         public static CustomizeVSWindowTitle CurrentPackage;
 
         private System.Windows.Forms.Timer ResetTitleTimer;
@@ -202,12 +225,14 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
         }
 
         private void OnIdeSolutionEvent(string oldname) {
+            this.SolutionFilterNameDirty = true;
             this.ClearCachedSettings();
             this.OnIdeEvent();
         }
 
         // clear settings cache and update
         private void OnIdeSolutionEvent() {
+            this.SolutionFilterNameDirty = true;
             this.ClearCachedSettings();
             this.OnIdeEvent();
         }
@@ -405,6 +430,8 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
                 }
                 var solution = Globals.DTE.Solution;
                 var solutionFullName = solution?.FullName;
+
+                this.EnsureSolutionFilterName();
 
                 var settings = this.GetSettings(solutionFullName: solutionFullName);
 

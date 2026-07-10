@@ -217,6 +217,9 @@
   <data name="tag_solutionName" xml:space="preserve">
     <value>Active solution name.</value>
   </data>
+  <data name="tag_solutionFilterName" xml:space="preserve">
+    <value>Name of the open solution filter (.slnf) if any, otherwise the active solution name.</value>
+  </data>
   <data name="tag_startupProjectsNames" xml:space="preserve">
     <value>Startup project(s) name(s), separated with ' &amp; ' if multiple.</value>
   </data>

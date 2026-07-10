@@ -416,7 +416,16 @@ namespace ErwinMayerLabs.CustomizeVSWindowTitleSharedResources.Properties {
                 return ResourceManager.GetString("tag_solutionName", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Name of the open solution filter (.slnf) if any, otherwise the active solution name..
+        /// </summary>
+        public static string tag_solutionFilterName {
+            get {
+                return ResourceManager.GetString("tag_solutionFilterName", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Startup project(s) name(s), separated with &apos; &amp; &apos; if multiple..
         /// </summary>
