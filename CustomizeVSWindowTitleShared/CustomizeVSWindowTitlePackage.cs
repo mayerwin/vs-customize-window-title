@@ -233,6 +233,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle {
         // clear settings cache and update
         private void OnIdeSolutionEvent() {
             this.SolutionFilterNameDirty = true;
+            Lib.TfsHelper.ResetFailures();
             this.ClearCachedSettings();
             this.OnIdeEvent();
         }

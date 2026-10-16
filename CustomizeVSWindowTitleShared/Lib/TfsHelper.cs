@@ -10,6 +10,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.VersionControl.Client;
 using Microsoft.TeamFoundation.VersionControl.Common;
@@ -17,16 +18,71 @@ using Microsoft.VisualStudio.Services.Client;
 
 namespace ErwinMayerLabs.RenameVSWindowTitle.Lib {
     internal static class TfsHelper {
+        private static readonly TimeSpan BranchCacheDuration = TimeSpan.FromSeconds(30);
+        private static readonly object SyncRoot = new object();
+        //One authenticated collection per server, so that the user is prompted at most once per session (the title is refreshed every few seconds).
+        private static readonly Dictionary<string, TfsTeamProjectCollection> Collections = new Dictionary<string, TfsTeamProjectCollection>(StringComparer.OrdinalIgnoreCase);
+        //Servers for which authentication failed or was cancelled: do not prompt again until the next ResetFailures().
+        private static readonly HashSet<string> FailedServers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private static readonly Dictionary<string, Tuple<string, DateTime>> BranchCache = new Dictionary<string, Tuple<string, DateTime>>(StringComparer.OrdinalIgnoreCase);
+
+        //Called on user-initiated events (solution opened/closed, settings changed), so that a cancelled login is retried then rather than on every title refresh.
+        //Only sets a flag: taking SyncRoot here could deadlock the UI thread while a login prompt is shown from the background thread.
+        public static void ResetFailures() {
+            ResetRequested = true;
+        }
+
+        private static volatile bool ResetRequested;
+
         public static string GetBranchNameFromLocalFile(string path) {
             if (string.IsNullOrEmpty(path))
                 return null;
+            lock (SyncRoot) {
+                if (ResetRequested) {
+                    ResetRequested = false;
+                    FailedServers.Clear();
+                    BranchCache.Clear();
+                }
+                if (BranchCache.TryGetValue(path, out var cached) && DateTime.UtcNow - cached.Item2 < BranchCacheDuration)
+                    return cached.Item1;
+                string branchName = null;
+                try {
+                    branchName = GetBranchNameFromLocalFileUncached(path);
+                    return branchName;
+                }
+                finally {
+                    //Also cache failures, to avoid hitting the server on every title refresh.
+                    BranchCache[path] = Tuple.Create(branchName, DateTime.UtcNow);
+                }
+            }
+        }
+
+        private static string GetBranchNameFromLocalFileUncached(string path) {
             var url = GetRepositoryUrl(path);
             if (string.IsNullOrEmpty(url))
                 return null;
-            var col = CreateTfsCollection(url);
+            var col = GetOrCreateTfsCollection(url);
+            if (col == null)
+                return null;
             var tfs = GetVersionControlServer(col);
             var branch = FindBranch(tfs, path);
             return System.IO.Path.GetFileName(branch);
+        }
+
+        private static TfsTeamProjectCollection GetOrCreateTfsCollection(string tfsName) {
+            if (FailedServers.Contains(tfsName))
+                return null;
+            if (Collections.TryGetValue(tfsName, out var col))
+                return col;
+            try {
+                col = CreateTfsCollection(tfsName);
+            }
+            catch (Exception) {
+                FailedServers.Add(tfsName);
+                return null;
+            }
+            Collections[tfsName] = col;
+            return col;
         }
 
         public static string FindBranch(VersionControlServer tfs, string path, VersionSpec versionSpec = null) {
@@ -53,7 +109,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle.Lib {
         }
 
         public static TfsTeamProjectCollection CreateTfsCollection(string tfsName) {
-            //This function may be a bit slow and runs on the UI thread, so would deserve optimization if many people are using it.
+            //Slow (network round trip, may prompt the user), so callers should go through GetOrCreateTfsCollection which caches the result.
             //Works for VS 2017+, with assemblies from VS 15. Does not work when compiling the VSIX from VS 2015 (will cause an exception saying the assembly could not be found).
             Uri fullyQualifiedUriForName = TfsTeamProjectCollection.GetFullyQualifiedUriForName(tfsName);
             if (Resolvers.IdeHelper.VsMajorVersion < 17) { 
@@ -64,7 +120,7 @@ namespace ErwinMayerLabs.RenameVSWindowTitle.Lib {
             //Only works with VS2022+
             var vssCredentials2 = new VssClientCredentials(useDefaultCredentials: true);
             var tfsTeamProjectCollection2 = new TfsTeamProjectCollection(fullyQualifiedUriForName, vssCredentials2);
-            tfsTeamProjectCollection2.Authenticate(); //Will only prompt user to authenticate once normally.
+            tfsTeamProjectCollection2.Authenticate(); //May prompt the user. Throws if authentication fails or is cancelled.
             return tfsTeamProjectCollection2;
         }
 
